@@ -2,15 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
-import {
-  CardContent,
-  CardHeader,
-  CardTitle,
-  DashboardCard,
-} from "@/components/common/dashboard-ui";
+import { CardContent, DashboardCard } from "@/components/common/dashboard-ui";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -44,22 +38,12 @@ export function AdminForm({ mode, values }: AdminFormProps) {
 
   return (
     <DashboardCard>
-      <CardHeader className="border-b border-border px-6 py-5">
-        <CardTitle className="text-lg font-semibold tracking-normal">
-          {isEdit ? "Update Admin / Owner" : "Admin / Owner Information"}
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {isEdit
-            ? "Edit account details, assigned company, and access status."
-            : "Create a mock owner account and assign it to a company."}
-        </p>
-      </CardHeader>
-      <CardContent className="p-6">
-        <form className="space-y-8">
-          <div className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="p-4 sm:p-6">
+        <form className="space-y-8 pb-32 lg:pb-0">
+          <div className="flex flex-col gap-4 rounded-2xl border border-border bg-secondary/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <Avatar className="size-14 rounded-xl border border-border">
-                <AvatarFallback className="rounded-xl bg-primary/12 text-primary">
+              <Avatar className="size-14 rounded-full border border-border">
+                <AvatarFallback className="rounded-full bg-primary/12 text-primary">
                   {values?.initials ?? "AD"}
                 </AvatarFallback>
               </Avatar>
@@ -82,7 +66,7 @@ export function AdminForm({ mode, values }: AdminFormProps) {
               <Input
                 defaultValue={values?.fullName}
                 placeholder="Enter full name"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -90,7 +74,7 @@ export function AdminForm({ mode, values }: AdminFormProps) {
               <Input
                 defaultValue={values?.username}
                 placeholder="john.doe"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -99,7 +83,7 @@ export function AdminForm({ mode, values }: AdminFormProps) {
                 defaultValue={values?.email}
                 placeholder="admin@company.com"
                 type="email"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -107,13 +91,13 @@ export function AdminForm({ mode, values }: AdminFormProps) {
               <Input
                 defaultValue={values?.phone}
                 placeholder="+91 98765 43210"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
             <Field label="Company">
               <Select defaultValue={values?.company ?? companies[0].company}>
-                <SelectTrigger className="h-11 rounded-xl bg-background">
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <SelectValue placeholder="Select company" />
                 </SelectTrigger>
                 <SelectContent>
@@ -128,7 +112,7 @@ export function AdminForm({ mode, values }: AdminFormProps) {
 
             <Field label="Status">
               <Select defaultValue={values?.status ?? "Active"}>
-                <SelectTrigger className="h-11 rounded-xl bg-background">
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,14 +128,14 @@ export function AdminForm({ mode, values }: AdminFormProps) {
                   <Input
                     placeholder="Set temporary password"
                     type="password"
-                    className="h-11 rounded-xl bg-background"
+                    className="h-11 rounded-xl bg-secondary/70"
                   />
                 </Field>
                 <Field label="Confirm Password">
                   <Input
                     placeholder="Confirm temporary password"
                     type="password"
-                    className="h-11 rounded-xl bg-background"
+                    className="h-11 rounded-xl bg-secondary/70"
                   />
                 </Field>
               </>
@@ -162,7 +146,7 @@ export function AdminForm({ mode, values }: AdminFormProps) {
             <ToggleCard
               title="Send Welcome Email"
               description="Mock notification for the assigned company admin."
-              control={<Checkbox defaultChecked={!isEdit} />}
+              control={<Switch defaultChecked={!isEdit} />}
             />
             <ToggleCard
               title={isEdit ? "Require Password Reset" : "Force First Login Reset"}
@@ -171,14 +155,17 @@ export function AdminForm({ mode, values }: AdminFormProps) {
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
+          <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-border bg-card/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:justify-end lg:static lg:mx-0 lg:mb-0 lg:border-t lg:bg-transparent lg:p-0 lg:pt-6 lg:shadow-none lg:backdrop-blur-none">
             <Link
               href="/master/admins"
-              className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-11 flex-1 rounded-xl lg:h-8 lg:flex-none",
+              )}
             >
               Cancel
             </Link>
-            <Button type="button" className="rounded-xl">
+            <Button type="button" className="h-11 flex-1 rounded-xl lg:h-8 lg:flex-none">
               <AppIcon name={isEdit ? "settings" : "plus"} className="size-4" />
               {isEdit ? "Update Admin" : "Create Admin"}
             </Button>
@@ -216,7 +203,7 @@ function ToggleCard({
   control: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-background p-4">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/70 p-4">
       <div>
         <p className="text-sm font-medium text-foreground">{title}</p>
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>

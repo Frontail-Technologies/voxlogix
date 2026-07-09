@@ -4,10 +4,10 @@ import { selectedAdmin } from "@/data/mock-master";
 
 export default function EditAdminPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
-        title="Edit Admin / Owner"
-        description="Update owner account details, company assignment, and access status."
+        title="Edit Admin"
+        description="Update admin account details, company assignment, and access status."
       />
       <AdminForm
         mode="edit"

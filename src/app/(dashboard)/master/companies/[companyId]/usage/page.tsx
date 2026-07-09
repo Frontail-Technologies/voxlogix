@@ -15,13 +15,13 @@ import { companyUsageStats, selectedCompany, usageByCompany } from "@/data/mock-
 
 export default function CompanyUsagePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Company Usage Detail"
         description={`AI, storage, and usage details for ${selectedCompany.company}`}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {companyUsageStats.map((stat) => (
           <DashboardStatCard key={stat.label} {...stat} />
         ))}

@@ -4,7 +4,7 @@ import { selectedCompany } from "@/data/mock-master";
 
 export default function EditCompanyPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Edit Company"
         description="Update company identity, owner contact, plan, and access status."

@@ -30,6 +30,16 @@ export const recentPlatformActivity = [
   { title: 'New module "Measurement Point" added', actor: "Master Super", time: "2 hours ago", icon: "modules" as AppIconName, tone: "blue" as const },
 ];
 
+export const masterActivities = [
+  { event: 'Company "ABC Industries" created', company: "ABC Industries", user: "Master Super", action: "Created", area: "Companies", time: "2 mins ago", status: "Success" },
+  { event: 'Admin "John Doe" created', company: "ABC Industries", user: "Master Super", action: "Created", area: "Admins", time: "15 mins ago", status: "Success" },
+  { event: 'AI usage limit updated', company: "XYZ Pvt Ltd", user: "Master Super", action: "Updated", area: "AI Usage", time: "45 mins ago", status: "Success" },
+  { event: 'Company "LMN Corp" suspended', company: "LMN Corp", user: "Master Super", action: "Suspended", area: "Companies", time: "1 hour ago", status: "Warning" },
+  { event: 'Module "Measurement Point" added', company: "Platform", user: "Master Super", action: "Created", area: "Modules", time: "2 hours ago", status: "Success" },
+  { event: "API key rotated", company: "Platform", user: "Master Super", action: "Updated", area: "Settings", time: "Yesterday", status: "Success" },
+  { event: 'Trial days changed for "PQR Solutions"', company: "PQR Solutions", user: "Master Super", action: "Updated", area: "Companies", time: "Yesterday", status: "Success" },
+];
+
 export const companies = [
   { company: "ABC Industries", logo: "AI", owner: "John Doe", email: "john@abc.com", phone: "+91 98765 43210", status: "Active", plan: "Professional", expiryDate: "31 Dec 2026", startDate: "01 Jan 2025", businessType: "Manufacturing" },
   { company: "XYZ Pvt Ltd", logo: "XP", owner: "Jane Smith", email: "jane@xyz.com", phone: "+91 98765 43211", status: "Active", plan: "Business", expiryDate: "15 Nov 2026", startDate: "15 Nov 2024", businessType: "Maintenance Services" },

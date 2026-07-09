@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
 import {
@@ -12,9 +15,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { selectedAdmin } from "@/data/mock-master";
 import { cn } from "@/lib/utils";
 
+import { AdminResetPasswordDialog } from "./admin-reset-password-dialog";
+
 export function AdminDetailView() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Admin Detail"
         description="Admin profile, assigned company, activity summary, and actions"
@@ -23,12 +28,13 @@ export function AdminDetailView() {
             href="/master/admins/john-doe/edit"
             className={buttonVariants({ className: "rounded-xl" })}
           >
+            <AppIcon name="settings" className="size-4" />
             Edit Admin
           </Link>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_320px]">
         <AdminProfileCard />
         <AdminQuickActions />
       </div>
@@ -39,10 +45,10 @@ export function AdminDetailView() {
 function AdminProfileCard() {
   return (
     <DashboardCard>
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Avatar className="size-16 rounded-2xl">
-            <AvatarFallback className="rounded-2xl bg-accent text-lg font-semibold text-accent-foreground">
+          <Avatar className="size-16 rounded-full">
+            <AvatarFallback className="rounded-full bg-primary/12 text-lg font-semibold text-primary">
               {selectedAdmin.initials}
             </AvatarFallback>
           </Avatar>
@@ -58,7 +64,7 @@ function AdminProfileCard() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <AdminInfoTile label="Email" value={selectedAdmin.email} />
           <AdminInfoTile label="Phone" value={selectedAdmin.phone} />
           <AdminInfoTile label="Last Login" value={selectedAdmin.lastLogin} />
@@ -67,14 +73,14 @@ function AdminProfileCard() {
 
         <div>
           <h3 className="mb-3 font-semibold">Activity Summary</h3>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {selectedAdmin.summary.map((item) => (
               <div
                 key={item.label}
-                className="rounded-2xl border border-border bg-background p-4"
+                className="rounded-2xl border border-border bg-background p-3 sm:p-4"
               >
                 <p className="text-xs text-muted-foreground">{item.label}</p>
-                <p className="mt-1 text-2xl font-semibold">{item.value}</p>
+                <p className="mt-1 text-lg font-semibold sm:text-2xl">{item.value}</p>
               </div>
             ))}
           </div>
@@ -102,36 +108,50 @@ function AdminProfileCard() {
 }
 
 function AdminQuickActions() {
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
   return (
-    <DashboardCard>
-      <CardContent className="space-y-3 p-5">
-        <h3 className="font-semibold">Actions</h3>
-        <Link
-          href="/master/admins/john-doe/edit"
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "w-full justify-start rounded-xl",
-          )}
-        >
-          <AppIcon name="admins" className="size-4" />
-          Edit Admin
-        </Link>
-        <Button variant="outline" className="w-full justify-start rounded-xl">
-          <AppIcon name="permissions" className="size-4" />
-          Reset Password
-        </Button>
-        <Button variant="destructive" className="w-full justify-start rounded-xl">
-          <AppIcon name="warning" className="size-4" />
-          Deactivate Admin
-        </Button>
-      </CardContent>
-    </DashboardCard>
+    <>
+      <DashboardCard>
+        <CardContent className="space-y-3 p-5">
+          <h3 className="font-semibold">Actions</h3>
+          <Link
+            href="/master/admins/john-doe/edit"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-start rounded-xl",
+            )}
+          >
+            <AppIcon name="admins" className="size-4" />
+            Edit Admin
+          </Link>
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-xl"
+            onClick={() => setResetDialogOpen(true)}
+          >
+            <AppIcon name="permissions" className="size-4" />
+            Reset Password
+          </Button>
+          <Button variant="destructive" className="w-full justify-start rounded-xl">
+            <AppIcon name="warning" className="size-4" />
+            Deactivate Admin
+          </Button>
+        </CardContent>
+      </DashboardCard>
+      <AdminResetPasswordDialog
+        adminName={selectedAdmin.admin}
+        adminEmail={selectedAdmin.email}
+        open={resetDialogOpen}
+        onOpenChange={setResetDialogOpen}
+      />
+    </>
   );
 }
 
 function AdminInfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-background p-4">
+    <div className="rounded-2xl border border-border bg-background p-3 sm:p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>

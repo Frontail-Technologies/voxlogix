@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function PlatformSettings() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Settings"
         description="Manage platform settings and configurations"
@@ -30,7 +30,7 @@ export function PlatformSettings() {
       <Tabs
         defaultValue="general"
         orientation="vertical"
-        className="grid gap-4 lg:grid-cols-[260px_1fr]"
+        className="grid gap-3 sm:gap-4 lg:grid-cols-[260px_1fr]"
       >
         <DashboardCard className="h-fit">
           <CardContent className="p-3">
@@ -63,7 +63,7 @@ export function PlatformSettings() {
 function GeneralSettings() {
   return (
     <TabsContent value="general" className="m-0">
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         <div>
           <h2 className="text-lg font-semibold">General Settings</h2>
           <p className="text-sm text-muted-foreground">
@@ -71,18 +71,18 @@ function GeneralSettings() {
           </p>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="platform-name">Platform Name</Label>
             <Input
               id="platform-name"
               defaultValue="VoxLogiX"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
             <Label>Platform Logo</Label>
-            <div className="flex h-11 items-center justify-between rounded-xl border border-border bg-background px-3">
+            <div className="flex h-11 items-center justify-between rounded-xl border border-border bg-secondary/70 px-3">
               <div className="flex items-center gap-2 font-semibold">
                 <AppIcon name="voice" className="size-5 text-primary" />
                 Vox<span className="text-primary">LogiX</span>
@@ -95,7 +95,7 @@ function GeneralSettings() {
           <div className="space-y-2">
             <Label>Default Theme</Label>
             <Select defaultValue="Light">
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -108,7 +108,7 @@ function GeneralSettings() {
           <div className="space-y-2">
             <Label>Default Language</Label>
             <Select defaultValue="English">
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ function GeneralSettings() {
             <Input
               id="trial-days"
               defaultValue="15"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
@@ -130,7 +130,7 @@ function GeneralSettings() {
             <Input
               id="upload-size"
               defaultValue="50"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
         </div>
@@ -146,7 +146,7 @@ function GeneralSettings() {
 function AISettings() {
   return (
     <TabsContent value="ai" className="m-0">
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         <div>
           <h2 className="text-lg font-semibold">AI Settings</h2>
           <p className="text-sm text-muted-foreground">
@@ -155,11 +155,11 @@ function AISettings() {
           </p>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <div className="space-y-2">
             <Label>AI Provider</Label>
             <Select defaultValue="OpenAI">
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -174,7 +174,7 @@ function AISettings() {
             <Input
               id="monthly-ai-limit"
               defaultValue="1,500 minutes"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
@@ -182,7 +182,7 @@ function AISettings() {
             <Input
               id="api-key-name"
               defaultValue="Production OpenAI Key"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
@@ -192,7 +192,7 @@ function AISettings() {
                 id="api-key"
                 type="password"
                 defaultValue="sk-voxlogix-demo-key"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
               <Button type="button" variant="outline" className="h-11 rounded-xl">
                 Add Key
@@ -204,13 +204,13 @@ function AISettings() {
             <Input
               id="model-name"
               defaultValue="gpt-4.1-mini"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
             <Label>Key Status</Label>
             <Select defaultValue="Active">
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ function AISettings() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/70 px-4 py-3">
             <div>
               <p className="text-sm font-medium">AI Structured Extraction</p>
               <p className="text-xs text-muted-foreground">
@@ -229,7 +229,7 @@ function AISettings() {
             </div>
             <Switch defaultChecked />
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/70 px-4 py-3">
             <div>
               <p className="text-sm font-medium">Usage Cost Alerts</p>
               <p className="text-xs text-muted-foreground">

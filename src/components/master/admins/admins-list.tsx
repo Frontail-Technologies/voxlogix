@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
 import { AppIcon } from "@/components/common/app-icon";
+import { ResponsiveSearchControl } from "@/components/common/responsive-search-control";
+import { TablePagination } from "@/components/common/table-pagination";
 import {
   DashboardCard,
   DashboardPageHeader,
@@ -14,7 +18,6 @@ import {
 } from "@/components/common/dashboard-ui";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,16 +26,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { admins, companies } from "@/data/mock-master";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 
 import { AdminActionsMenu } from "./admin-actions-menu";
 
 export function AdminsList() {
+  const pagination = usePagination({ items: admins });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
-        title="Admins / Owners"
-        description="Manage company owner accounts and access status"
+        title="Admins"
+        description="Manage company admin accounts and access status"
         action={
           <Link
             href="/master/admins/new"
@@ -45,15 +51,22 @@ export function AdminsList() {
       />
 
       <div className="space-y-3">
+        <AdminsToolbar />
         <DashboardCard>
-          <div className="p-5 pb-4">
-            <AdminsToolbar />
-          </div>
-          <AdminsTable />
+          <AdminsTable admins={pagination.pageItems} />
         </DashboardCard>
-        <p className="px-1 text-sm text-muted-foreground">
-          Showing 1 to 5 of 42 results
-        </p>
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          startItem={pagination.startItem}
+          endItem={pagination.endItem}
+          totalItems={pagination.totalItems}
+          canPrevious={pagination.canPrevious}
+          canNext={pagination.canNext}
+          onPageChange={pagination.goToPage}
+          onPrevious={pagination.previousPage}
+          onNext={pagination.nextPage}
+        />
       </div>
     </div>
   );
@@ -61,20 +74,11 @@ export function AdminsList() {
 
 function AdminsToolbar() {
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="relative w-full lg:max-w-xs">
-        <AppIcon
-          name="search"
-          className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          placeholder="Search admin..."
-          className="h-10 rounded-xl bg-background pl-9"
-        />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:flex">
+    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 lg:flex lg:items-center lg:justify-between">
+      <ResponsiveSearchControl placeholder="Search admin..." />
+      <div className="contents lg:flex lg:gap-3">
         <Select defaultValue="All Companies">
-          <SelectTrigger className="h-10 w-full rounded-xl bg-background lg:w-48">
+          <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 lg:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +91,7 @@ function AdminsToolbar() {
           </SelectContent>
         </Select>
         <Select defaultValue="All Status">
-          <SelectTrigger className="h-10 w-full rounded-xl bg-background lg:w-40">
+          <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 lg:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +105,7 @@ function AdminsToolbar() {
   );
 }
 
-function AdminsTable() {
+function AdminsTable({ admins }: { admins: typeof import("@/data/mock-master").admins }) {
   return (
     <Table>
       <TableHeader>
@@ -125,14 +129,14 @@ function AdminsTable() {
                   href={`/master/admins/${adminId}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="size-9 rounded-xl">
-                    <AvatarFallback className="rounded-xl bg-accent text-xs font-semibold text-accent-foreground">
+                  <Avatar className="size-9 rounded-full">
+                    <AvatarFallback className="rounded-full bg-primary/12 text-xs font-semibold text-primary">
                       {admin.initials}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-foreground">{admin.admin}</p>
-                    <p className="text-xs text-muted-foreground">Owner Admin</p>
+                    <p className="text-xs text-muted-foreground">Company Admin</p>
                   </div>
                 </Link>
               </TableCell>
@@ -143,7 +147,11 @@ function AdminsTable() {
               </TableCell>
               <TableCell>{admin.lastLogin}</TableCell>
               <TableCell className="text-right">
-                <AdminActionsMenu adminId={adminId} />
+                <AdminActionsMenu
+                  adminId={adminId}
+                  adminName={admin.admin}
+                  adminEmail={admin.email}
+                />
               </TableCell>
             </TableRow>
           );

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export function ModulesList() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Modules"
         description="Manage global platform modules and field schemas"
@@ -27,17 +27,17 @@ export function ModulesList() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         {globalModules.map((module) => (
           <DashboardCard key={module.name} className="rounded-xl">
-            <div className="space-y-5 p-4">
+            <div className="space-y-3 p-3 sm:space-y-5 sm:p-4">
               <div className="flex items-start justify-between gap-3">
                 <Link
                   href="/master/modules/equipment/edit"
-                  className="flex min-w-0 items-center gap-3"
+                  className="flex min-w-0 items-center gap-2 sm:gap-3"
                 >
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/14 text-primary">
-                    <AppIcon name={module.icon} className="size-6" />
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/14 text-primary sm:size-12 sm:rounded-2xl">
+                    <AppIcon name={module.icon} className="size-5 sm:size-6" />
                   </div>
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold text-card-foreground">
@@ -50,7 +50,7 @@ export function ModulesList() {
                 </Link>
                 <Link
                   href="/master/modules/equipment/edit"
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:size-8"
                 >
                   <AppIcon name="more" className="size-5" />
                   <span className="sr-only">Module actions</span>
@@ -58,7 +58,7 @@ export function ModulesList() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="truncate text-xs font-medium text-muted-foreground">
                   {module.availability}
                 </span>
                 <StatusBadge status={module.status} />

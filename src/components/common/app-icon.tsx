@@ -2,11 +2,14 @@
 
 import {
   Activity,
+  ArrowLeft,
   ArchiveBox,
   Bell,
   Buildings,
   CalendarBlank,
   CaretDown,
+  CaretLeft,
+  CaretRight,
   ChartBar,
   CheckCircle,
   ClipboardText,
@@ -20,6 +23,7 @@ import {
   ListChecks,
   LockKey,
   MagnifyingGlass,
+  ListDashes,
   Microphone,
   Package,
   Plus,
@@ -36,11 +40,14 @@ import {
 
 export type AppIconName =
   | "activity"
+  | "arrow-left"
   | "admins"
   | "ai"
   | "billing"
   | "calendar"
   | "caret-down"
+  | "caret-left"
+  | "caret-right"
   | "companies"
   | "dashboard"
   | "database"
@@ -58,6 +65,7 @@ export type AppIconName =
   | "profile"
   | "reports"
   | "search"
+  | "sidebar"
   | "settings"
   | "status"
   | "storage"
@@ -68,11 +76,14 @@ export type AppIconName =
 
 const iconMap = {
   activity: Activity,
+  "arrow-left": ArrowLeft,
   admins: UserGear,
   ai: Sparkle,
   billing: CreditCard,
   calendar: CalendarBlank,
   "caret-down": CaretDown,
+  "caret-left": CaretLeft,
+  "caret-right": CaretRight,
   companies: Buildings,
   dashboard: Gauge,
   database: Database,
@@ -90,6 +101,7 @@ const iconMap = {
   profile: UserCircle,
   reports: ChartBar,
   search: MagnifyingGlass,
+  sidebar: ListDashes,
   settings: GearSix,
   status: CheckCircle,
   storage: ArchiveBox,

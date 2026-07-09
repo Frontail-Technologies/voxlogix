@@ -3,7 +3,7 @@ import { ModuleForm } from "@/components/master/modules/module-form";
 
 export default function NewGlobalModulePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Add Global Module"
         description="Create a mock platform module definition"

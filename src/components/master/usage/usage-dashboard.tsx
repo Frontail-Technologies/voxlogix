@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 
 export function UsageDashboard() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="AI Usage Dashboard"
         description="Monitor AI usage, cost, and success rate across companies"
@@ -43,13 +43,13 @@ export function UsageDashboard() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {aiUsageStats.map((stat) => (
           <DashboardStatCard key={stat.label} {...stat} />
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_420px]">
         <DashboardCard>
           <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -100,33 +100,33 @@ export function UsageDashboard() {
 function UsageByCompanySection() {
   return (
     <div className="space-y-3">
-      <DashboardCard>
-        <div className="flex flex-col gap-3 p-5 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-semibold text-card-foreground">
-              Usage by Company
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Company-wise voice minutes, AI logs, success rate, and cost
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PeriodSelect />
-            <Select defaultValue="All Companies">
-              <SelectTrigger className="h-10 w-full rounded-xl bg-background sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Companies">All Companies</SelectItem>
-                {usageByCompany.map((usage) => (
-                  <SelectItem key={usage.company} value={usage.company}>
-                    {usage.company}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="font-semibold text-card-foreground">
+            Usage by Company
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Company-wise voice minutes, AI logs, success rate, and cost
+          </p>
         </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <PeriodSelect />
+          <Select defaultValue="All Companies">
+            <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Companies">All Companies</SelectItem>
+              {usageByCompany.map((usage) => (
+                <SelectItem key={usage.company} value={usage.company}>
+                  {usage.company}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <DashboardCard>
         <UsageByCompanyTable />
       </DashboardCard>
       <p className="px-1 text-sm text-muted-foreground">
@@ -193,7 +193,7 @@ function UsageByCompanyTable() {
 function PeriodSelect() {
   return (
     <Select defaultValue="This Month">
-      <SelectTrigger className="h-10 w-full rounded-xl bg-background sm:w-36">
+      <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 sm:w-36">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

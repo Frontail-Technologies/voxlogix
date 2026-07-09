@@ -1,5 +1,9 @@
 import type { ComponentProps, ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/common/app-icon";
+import {
+  PageHeaderBreadcrumbs,
+  PageTitleBackButton,
+} from "@/components/common/page-header-navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +30,7 @@ export type DashboardTone =
 const toneClasses: Record<DashboardTone, string> = {
   amber: "bg-primary/14 text-primary",
   green: "bg-chart-2/14 text-chart-2",
-  orange: "bg-chart-2/14 text-chart-2",
+  orange: "bg-chart-3/12 text-chart-3",
   purple: "bg-chart-5/14 text-chart-5",
   red: "bg-destructive/12 text-destructive",
   blue: "bg-chart-4/14 text-chart-4",
@@ -44,14 +48,25 @@ export function DashboardPageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal text-foreground">
-          {title}
-        </h1>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <PageHeaderBreadcrumbs />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <PageTitleBackButton />
+            <h1 className="truncate text-xl font-semibold tracking-normal text-foreground sm:text-2xl">
+              {title}
+            </h1>
+          </div>
+          {action ? (
+            <div className="[&_a]:size-9 [&_a]:gap-0 [&_a]:rounded-xl [&_a]:px-0 [&_a]:text-[0px] [&_button]:size-9 [&_button]:gap-0 [&_button]:rounded-xl [&_button]:px-0 [&_button]:text-[0px] [&_svg]:size-4 sm:hidden">
+              {action}
+            </div>
+          ) : null}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
-      {action}
+      {action ? <div className="hidden sm:block">{action}</div> : null}
     </div>
   );
 }
@@ -71,23 +86,23 @@ export function DashboardStatCard({
 }) {
   return (
     <Card className="rounded-2xl border-border bg-card shadow-sm">
-      <CardContent className="flex items-center gap-4 p-5">
+      <CardContent className="flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
         <div
           className={cn(
-            "flex size-12 shrink-0 items-center justify-center rounded-xl",
+            "flex size-9 shrink-0 items-center justify-center rounded-xl sm:size-12",
             toneClasses[tone],
           )}
         >
-          <AppIcon name={icon} className="size-6" />
+          <AppIcon name={icon} className="size-5 sm:size-6" />
         </div>
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1 text-2xl font-semibold tracking-normal text-card-foreground">
+          <p className="mt-1 text-lg font-semibold tracking-normal text-card-foreground sm:text-2xl">
             {value}
           </p>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
+          <p className="mt-1 hidden truncate text-xs text-muted-foreground sm:block">
             {helper}
           </p>
         </div>
@@ -99,9 +114,19 @@ export function DashboardStatCard({
 export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const className =
-    normalized === "active"
+    normalized === "active" ||
+    normalized === "success" ||
+    normalized === "completed" ||
+    normalized === "enabled"
       ? "bg-chart-2/14 text-chart-2"
-      : normalized === "suspended"
+      : normalized === "warning" ||
+          normalized === "pending" ||
+          normalized === "trial enabled"
+        ? "bg-primary/18 text-primary"
+        : normalized === "suspended" ||
+            normalized === "failed" ||
+            normalized === "error" ||
+            normalized === "blocked"
         ? "bg-destructive/12 text-destructive"
         : normalized === "demo"
           ? "bg-chart-4/14 text-chart-4"
@@ -233,7 +258,12 @@ export function TableHeader({
   className,
   ...props
 }: ComponentProps<typeof BaseTableHeader>) {
-  return <BaseTableHeader className={cn("bg-muted/65", className)} {...props} />;
+  return (
+    <BaseTableHeader
+      className={cn("bg-secondary text-secondary-foreground", className)}
+      {...props}
+    />
+  );
 }
 
 export {

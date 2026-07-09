@@ -13,19 +13,19 @@ import { aiChartPoints, masterStats, recentPlatformActivity } from "@/data/mock-
 
 export default function MasterDashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Master Dashboard"
         description="Overview of platform activity and usage"
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {masterStats.slice(0, 8).map((stat) => (
           <DashboardStatCard key={stat.label} {...stat} />
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1.18fr_0.82fr]">
         <DashboardCard>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>

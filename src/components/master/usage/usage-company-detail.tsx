@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 
 export function UsageCompanyDetail() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="AI Usage Company Detail"
         description="Company-specific voice minutes, AI logs, failures, and estimated cost"
@@ -35,6 +35,7 @@ export function UsageCompanyDetail() {
             href="/master/usage"
             className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}
           >
+            <AppIcon name="arrow-left" className="size-4" />
             Back to Usage
           </Link>
         }
@@ -64,13 +65,13 @@ export function UsageCompanyDetail() {
         </div>
       </DashboardCard>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {selectedUsageCompanyStats.map((stat) => (
           <DashboardStatCard key={stat.label} {...stat} />
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_360px]">
         <DashboardCard>
           <div className="border-b border-border p-5">
             <h2 className="font-semibold text-card-foreground">

@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
 import { AppIcon } from "@/components/common/app-icon";
+import { ResponsiveSearchControl } from "@/components/common/responsive-search-control";
+import { TablePagination } from "@/components/common/table-pagination";
 import {
   DashboardCard,
   DashboardPageHeader,
@@ -14,7 +18,6 @@ import {
 } from "@/components/common/dashboard-ui";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,13 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { companies } from "@/data/mock-master";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 
 import { CompanyActionsMenu } from "./company-actions-menu";
 
 export function CompaniesList() {
+  const pagination = usePagination({ items: companies });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Companies"
         description="Manage all companies on the platform"
@@ -45,15 +51,22 @@ export function CompaniesList() {
       />
 
       <div className="space-y-3">
+        <CompaniesToolbar />
         <DashboardCard>
-          <div className="p-5 pb-4">
-            <CompaniesToolbar />
-          </div>
-          <CompaniesTable />
+          <CompaniesTable companies={pagination.pageItems} />
         </DashboardCard>
-        <p className="px-1 text-sm text-muted-foreground">
-          Showing 1 to 5 of 24 results
-        </p>
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          startItem={pagination.startItem}
+          endItem={pagination.endItem}
+          totalItems={pagination.totalItems}
+          canPrevious={pagination.canPrevious}
+          canNext={pagination.canNext}
+          onPageChange={pagination.goToPage}
+          onPrevious={pagination.previousPage}
+          onNext={pagination.nextPage}
+        />
       </div>
     </div>
   );
@@ -61,19 +74,13 @@ export function CompaniesList() {
 
 function CompaniesToolbar() {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="relative w-full sm:max-w-xs">
-        <AppIcon
-          name="search"
-          className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          placeholder="Search company..."
-          className="h-10 rounded-xl bg-background pl-9"
-        />
-      </div>
+    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-2 sm:flex sm:items-center sm:justify-between">
+      <ResponsiveSearchControl
+        placeholder="Search company..."
+        desktopClassName="sm:max-w-xs"
+      />
       <Select defaultValue="All Status">
-        <SelectTrigger className="h-10 w-full rounded-xl bg-background sm:w-40">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 sm:w-40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -88,7 +95,7 @@ function CompaniesToolbar() {
   );
 }
 
-function CompaniesTable() {
+function CompaniesTable({ companies }: { companies: typeof import("@/data/mock-master").companies }) {
   return (
     <Table>
       <TableHeader>
@@ -134,7 +141,10 @@ function CompaniesTable() {
               <TableCell>{company.plan}</TableCell>
               <TableCell>{company.expiryDate}</TableCell>
               <TableCell className="text-right">
-                <CompanyActionsMenu companyId={companyId} />
+                <CompanyActionsMenu
+                  companyId={companyId}
+                  companyName={company.company}
+                />
               </TableCell>
             </TableRow>
           );

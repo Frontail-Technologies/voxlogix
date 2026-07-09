@@ -2,12 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
-import {
-  CardContent,
-  CardHeader,
-  CardTitle,
-  DashboardCard,
-} from "@/components/common/dashboard-ui";
+import { CardContent, DashboardCard } from "@/components/common/dashboard-ui";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,22 +53,12 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
 
   return (
     <DashboardCard>
-      <CardHeader className="border-b border-border px-6 py-5">
-        <CardTitle className="text-lg font-semibold tracking-normal">
-          {isEdit ? "Update Company" : "Company Information"}
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {isEdit
-            ? "Edit company identity, ownership, plan, and operating status."
-            : "Create a mock company profile with owner, plan, status, and dates."}
-        </p>
-      </CardHeader>
-      <CardContent className="p-6">
-        <form className="space-y-8">
+      <CardContent className="p-4 sm:p-6">
+        <form className="space-y-8 pb-32 lg:pb-0">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="lg:col-span-2">
               <Label>Company Logo</Label>
-              <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-border bg-secondary/70 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
                   <Avatar className="size-14 rounded-xl border border-border">
                     <AvatarFallback className="rounded-xl bg-primary/12 text-primary">
@@ -100,13 +85,13 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Input
                 defaultValue={values?.companyName}
                 placeholder="Enter company name"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
             <Field label="Business Type">
               <Select defaultValue={values?.businessType ?? "Manufacturing"}>
-                <SelectTrigger className="h-11 rounded-xl bg-background">
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <SelectValue placeholder="Select business type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,7 +108,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Input
                 defaultValue={values?.ownerName}
                 placeholder="Enter owner name"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -132,7 +117,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
                 defaultValue={values?.ownerEmail}
                 placeholder="owner@company.com"
                 type="email"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -140,13 +125,13 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Input
                 defaultValue={values?.ownerPhone}
                 placeholder="+91 98765 43210"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
             <Field label="Plan Type">
               <Select defaultValue={values?.planType ?? "Professional"}>
-                <SelectTrigger className="h-11 rounded-xl bg-background">
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <SelectValue placeholder="Select plan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,7 +146,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
 
             <Field label="Status">
               <Select defaultValue={values?.status ?? "Active"}>
-                <SelectTrigger className="h-11 rounded-xl bg-background">
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -178,7 +163,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Input
                 defaultValue={values?.startDate}
                 placeholder="01 Jan 2026"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -186,7 +171,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Input
                 defaultValue={values?.expiryDate}
                 placeholder="31 Dec 2026"
-                className="h-11 rounded-xl bg-background"
+                className="h-11 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -194,7 +179,7 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Textarea
                 defaultValue={values?.address}
                 placeholder="Enter company address"
-                className="min-h-24 rounded-xl bg-background"
+                className="min-h-24 rounded-xl bg-secondary/70"
               />
             </Field>
 
@@ -202,19 +187,22 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Textarea
                 defaultValue={values?.notes}
                 placeholder="Internal notes for the Master team"
-                className="min-h-24 rounded-xl bg-background"
+                className="min-h-24 rounded-xl bg-secondary/70"
               />
             </Field>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
+          <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-border bg-card/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:justify-end lg:static lg:mx-0 lg:mb-0 lg:border-t lg:bg-transparent lg:p-0 lg:pt-6 lg:shadow-none lg:backdrop-blur-none">
             <Link
               href="/master/companies"
-              className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-11 flex-1 rounded-xl lg:h-8 lg:flex-none",
+              )}
             >
               Cancel
             </Link>
-            <Button type="button" className="rounded-xl">
+            <Button type="button" className="h-11 flex-1 rounded-xl lg:h-8 lg:flex-none">
               <AppIcon name={isEdit ? "settings" : "plus"} className="size-4" />
               {isEdit ? "Update Company" : "Create Company"}
             </Button>

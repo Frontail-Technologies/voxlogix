@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { AppIcon } from "@/components/common/app-icon";
 import { buttonVariants } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { APP_NAME } from "@/config/constants";
 
 export default function LoginPage() {
@@ -32,7 +32,6 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-5 p-6 pt-3">
           <div className="space-y-1 text-center">
-            {/* <CardTitle className="text-2xl">Welcome back</CardTitle> */}
             <p className="text-sm text-muted-foreground">
               Login to your account to continue
             </p>
@@ -42,7 +41,7 @@ export default function LoginPage() {
             <Input
               id="username"
               placeholder="Enter your email or username"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
@@ -52,7 +51,7 @@ export default function LoginPage() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                className="h-11 rounded-xl bg-background pr-11"
+                className="h-11 rounded-xl bg-secondary/70 pr-11"
               />
               <button
                 type="button"
@@ -71,7 +70,7 @@ export default function LoginPage() {
           </div>
           <div className="flex items-center justify-between gap-3">
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Checkbox />
+              <Switch />
               Remember me
             </label>
             <Link

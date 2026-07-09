@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 export function CompanyDetailView() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Company Detail"
         description="Company overview, access, usage, modules, and quick actions"
@@ -24,12 +24,13 @@ export function CompanyDetailView() {
             href="/master/companies/abc-industries/edit"
             className={buttonVariants({ className: "rounded-xl" })}
           >
+            <AppIcon name="settings" className="size-4" />
             Edit Company
           </Link>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_320px]">
         <CompanyOverviewCard />
         <CompanyQuickActions />
       </div>
@@ -40,7 +41,7 @@ export function CompanyDetailView() {
 function CompanyOverviewCard() {
   return (
     <DashboardCard>
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         <CompanyIdentity />
         <CompanyStatsGrid />
         <CompanyInfoGrid />
@@ -78,11 +79,11 @@ function CompanyIdentity() {
 
 function CompanyStatsGrid() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       {selectedCompany.stats.map((stat) => (
         <div
           key={stat.label}
-          className="rounded-2xl border border-border bg-background p-4"
+          className="rounded-2xl border border-border bg-background p-3 sm:p-4"
         >
           <p className="text-xs text-muted-foreground">{stat.label}</p>
           <p className="mt-1 text-lg font-semibold">{stat.value}</p>
@@ -94,8 +95,8 @@ function CompanyStatsGrid() {
 
 function CompanyInfoGrid() {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-border bg-background p-4">
+    <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-border bg-background p-3 sm:p-4">
         <h3 className="font-semibold">Owner</h3>
         <div className="mt-3 space-y-2 text-sm">
           <p>
@@ -112,7 +113,7 @@ function CompanyInfoGrid() {
           </p>
         </div>
       </div>
-      <div className="rounded-2xl border border-border bg-background p-4">
+      <div className="rounded-2xl border border-border bg-background p-3 sm:p-4">
         <h3 className="font-semibold">Company Notes</h3>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           {selectedCompany.notes}
@@ -129,11 +130,11 @@ function EnabledModules() {
   return (
     <div>
       <h3 className="mb-3 font-semibold">Enabled Modules</h3>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {globalModules.slice(0, 3).map((module) => (
           <div
             key={module.name}
-            className="rounded-2xl border border-border bg-background p-4"
+            className="rounded-2xl border border-border bg-background p-3 sm:p-4"
           >
             <div className="flex items-center gap-2">
               <AppIcon name={module.icon} className="size-5 text-primary" />

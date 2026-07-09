@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AppIcon } from "@/components/common/app-icon";
 import {
   DashboardCard,
@@ -8,9 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/common/dashboard-ui";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,8 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { equipmentSchemaFields } from "@/data/mock-master";
+import { cn } from "@/lib/utils";
 
 type ModuleFormProps = {
   mode: "create" | "edit";
@@ -40,28 +43,22 @@ export function ModuleForm({ mode }: ModuleFormProps) {
   const isEdit = mode === "edit";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 pb-32 sm:space-y-6 lg:pb-0">
       <DashboardCard>
-        <CardHeader className="border-b border-border px-6 py-5">
-          <CardTitle>{isEdit ? "Module Details" : "New Module Details"}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Define the module identity, status, and display metadata.
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-5 p-6 xl:grid-cols-2">
+        <CardContent className="grid gap-4 p-4 sm:p-6 xl:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="module-name">Module Name</Label>
             <Input
               id="module-name"
               defaultValue={isEdit ? "Equipment Log" : undefined}
               placeholder="Equipment Log"
-              className="h-11 rounded-xl bg-background"
+              className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
           <div className="space-y-2">
             <Label>Module Type</Label>
             <Select defaultValue="Operational">
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -74,7 +71,7 @@ export function ModuleForm({ mode }: ModuleFormProps) {
           <div className="space-y-2">
             <Label>Status</Label>
             <Select defaultValue={isEdit ? "Active" : "Inactive"}>
-              <SelectTrigger className="h-11 w-full rounded-xl bg-background">
+              <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -85,7 +82,7 @@ export function ModuleForm({ mode }: ModuleFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="module-color">Module Color</Label>
-            <div className="flex h-11 items-center gap-3 rounded-xl border border-input bg-background px-3">
+            <div className="flex h-11 items-center gap-3 rounded-xl border border-input bg-secondary/70 px-3">
               <Input
                 id="module-color"
                 type="color"
@@ -109,7 +106,7 @@ export function ModuleForm({ mode }: ModuleFormProps) {
                   : undefined
               }
               placeholder="Describe the module purpose..."
-              className="min-h-24 rounded-xl bg-background"
+              className="min-h-24 rounded-xl bg-secondary/70"
             />
           </div>
         </CardContent>
@@ -120,8 +117,17 @@ export function ModuleForm({ mode }: ModuleFormProps) {
         <ModulePromptPreview />
       </div>
 
-      <div className="flex justify-end">
-        <Button className="rounded-xl">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-border bg-card/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:justify-end lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+        <Link
+          href="/master/modules"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-11 flex-1 rounded-xl lg:h-8 lg:flex-none",
+          )}
+        >
+          Cancel
+        </Link>
+        <Button className="h-11 flex-1 rounded-xl lg:h-8 lg:flex-none">
           <AppIcon name={isEdit ? "settings" : "plus"} className="size-4" />
           {isEdit ? "Update Module" : "Create Module"}
         </Button>
@@ -141,7 +147,7 @@ export function ModuleFieldsBuilder({
 
   return (
     <DashboardCard>
-      <CardHeader className="border-b border-border px-5 py-4">
+      <CardHeader className="border-b border-border px-5 py-2">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle>Schema Fields</CardTitle>
@@ -176,7 +182,7 @@ export function ModuleFieldsBuilder({
                 ) : (
                   <Input
                     placeholder="New field label"
-                    className="h-9 min-w-40 rounded-lg bg-background"
+                    className="h-9 min-w-40 rounded-lg bg-secondary/70"
                   />
                 )}
               </TableCell>
@@ -186,7 +192,7 @@ export function ModuleFieldsBuilder({
                 ) : (
                   <Input
                     placeholder="field_key"
-                    className="h-9 min-w-36 rounded-lg bg-background"
+                    className="h-9 min-w-36 rounded-lg bg-secondary/70"
                   />
                 )}
               </TableCell>
@@ -195,7 +201,7 @@ export function ModuleFieldsBuilder({
                   field.type
                 ) : (
                   <Select defaultValue="Text">
-                    <SelectTrigger className="h-9 w-32 rounded-lg bg-background">
+                    <SelectTrigger className="h-9 w-32 rounded-lg bg-secondary/70">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -208,10 +214,10 @@ export function ModuleFieldsBuilder({
                 )}
               </TableCell>
               <TableCell>
-                <Checkbox defaultChecked={field.required} />
+                <Switch defaultChecked={field.required} />
               </TableCell>
               <TableCell>
-                <Checkbox defaultChecked={field.aiExtract} />
+                <Switch defaultChecked={field.aiExtract} />
               </TableCell>
               <TableCell>{field.order || index + 1}</TableCell>
             </TableRow>
@@ -225,7 +231,7 @@ export function ModuleFieldsBuilder({
 export function ModulePromptPreview() {
   return (
     <DashboardCard>
-      <CardHeader className="border-b border-border px-5 py-4">
+      <CardHeader className="border-b border-border px-5 py-2">
         <CardTitle>AI Prompt Preview</CardTitle>
         <p className="text-sm text-muted-foreground">
           AI will extract only the enabled fields from this schema.
