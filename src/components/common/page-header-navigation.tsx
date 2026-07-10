@@ -145,10 +145,10 @@ export function PageTitleBackButton() {
   return (
     <Link
       href={href}
-      className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      className="-ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
       aria-label="Go back"
     >
-      <AppIcon name="arrow-left" className="size-4" />
+      <AppIcon name="arrow-left" className="size-5" />
     </Link>
   );
 }

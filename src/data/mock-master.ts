@@ -64,11 +64,11 @@ export const aiUsageStats = [
 ];
 
 export const usageByCompany = [
-  { company: "ABC Industries", logo: "AI", minutes: "330 min", aiLogs: "2,980", successRate: "90.5%", percentage: 25.7, cost: "$328.00" },
-  { company: "XYZ Pvt Ltd", logo: "XP", minutes: "280 min", aiLogs: "2,290", successRate: "87.2%", percentage: 22.5, cost: "$280.00" },
-  { company: "LMN Corp", logo: "LC", minutes: "210 min", aiLogs: "2,090", successRate: "88.1%", percentage: 16.9, cost: "$210.00" },
-  { company: "PQR Solutions", logo: "PS", minutes: "190 min", aiLogs: "1,400", successRate: "82.5%", percentage: 15.3, cost: "$190.00" },
-  { company: "STU Enterprises", logo: "SE", minutes: "120 min", aiLogs: "1,300", successRate: "79.4%", percentage: 9.6, cost: "$126.00" },
+  { company: "ABC Industries", logo: "AI", minutes: "330 min", aiLogs: "2,980", successRate: "90.5%", percentage: 25.7, cost: "$328.00", lastProcessed: "31 May 2025" },
+  { company: "XYZ Pvt Ltd", logo: "XP", minutes: "280 min", aiLogs: "2,290", successRate: "87.2%", percentage: 22.5, cost: "$280.00", lastProcessed: "30 May 2025" },
+  { company: "LMN Corp", logo: "LC", minutes: "210 min", aiLogs: "2,090", successRate: "88.1%", percentage: 16.9, cost: "$210.00", lastProcessed: "29 May 2025" },
+  { company: "PQR Solutions", logo: "PS", minutes: "190 min", aiLogs: "1,400", successRate: "82.5%", percentage: 15.3, cost: "$190.00", lastProcessed: "28 May 2025" },
+  { company: "STU Enterprises", logo: "SE", minutes: "120 min", aiLogs: "1,300", successRate: "79.4%", percentage: 9.6, cost: "$126.00", lastProcessed: "27 May 2025" },
 ];
 
 export const selectedUsageCompanyStats = [
@@ -129,12 +129,12 @@ export const companyUsageStats = [
 ];
 
 export const globalModules = [
-  { name: "Equipment Log", category: "Operational", icon: "equipment" as AppIconName, status: "Active", availability: "Trial Enabled", fields: 6 },
-  { name: "Safety Log", category: "Operational", icon: "warning" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 7 },
-  { name: "Measurement Point", category: "Operational", icon: "status" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 6 },
-  { name: "Meter / Counter", category: "Operational", icon: "database" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 5 },
-  { name: "Shift", category: "Operational", icon: "calendar" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 5 },
-  { name: "Suggestion", category: "Operational", icon: "planning" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 4 },
+  { name: "Equipment Log", category: "Operational", icon: "equipment" as AppIconName, status: "Active", availability: "Trial Enabled", fields: 6, createdOn: "01 Jan 2025" },
+  { name: "Safety Log", category: "Operational", icon: "warning" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 7, createdOn: "15 Feb 2025" },
+  { name: "Measurement Point", category: "Operational", icon: "status" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 6, createdOn: "20 Mar 2025" },
+  { name: "Meter / Counter", category: "Operational", icon: "database" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 5, createdOn: "05 Apr 2025" },
+  { name: "Shift", category: "Operational", icon: "calendar" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 5, createdOn: "18 Apr 2025" },
+  { name: "Suggestion", category: "Operational", icon: "planning" as AppIconName, status: "Inactive", availability: "Coming Soon", fields: 4, createdOn: "02 May 2025" },
 ];
 
 export const equipmentSchemaFields = [

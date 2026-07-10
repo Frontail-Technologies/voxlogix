@@ -104,6 +104,7 @@ function CompaniesTable({ companies }: { companies: typeof import("@/data/mock-m
           <TableHead>Owner</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Plan</TableHead>
+          <TableHead>Start Date</TableHead>
           <TableHead>Expiry Date</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -119,8 +120,8 @@ function CompaniesTable({ companies }: { companies: typeof import("@/data/mock-m
                   href={`/master/companies/${companyId}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="size-9 rounded-xl">
-                    <AvatarFallback className="rounded-xl bg-accent text-xs font-semibold text-accent-foreground">
+                  <Avatar className="size-9 rounded-full border border-primary/20 bg-primary/12">
+                    <AvatarFallback className="text-xs font-semibold text-primary">
                       {company.logo}
                     </AvatarFallback>
                   </Avatar>
@@ -139,6 +140,7 @@ function CompaniesTable({ companies }: { companies: typeof import("@/data/mock-m
                 <StatusBadge status={company.status} />
               </TableCell>
               <TableCell>{company.plan}</TableCell>
+              <TableCell>{company.startDate}</TableCell>
               <TableCell>{company.expiryDate}</TableCell>
               <TableCell className="text-right">
                 <CompanyActionsMenu

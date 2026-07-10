@@ -26,7 +26,9 @@ import {
   ListDashes,
   Microphone,
   Package,
+  Planet,
   Plus,
+  RocketLaunch,
   Sparkle,
   SquaresFour,
   Sun,
@@ -60,10 +62,12 @@ export type AppIconName =
   | "notifications"
   | "package"
   | "permissions"
+  | "planet"
   | "plus"
   | "planning"
   | "profile"
   | "reports"
+  | "rocket"
   | "search"
   | "sidebar"
   | "settings"
@@ -96,10 +100,12 @@ const iconMap = {
   notifications: Bell,
   package: Package,
   permissions: LockKey,
+  planet: Planet,
   plus: Plus,
   planning: ListChecks,
   profile: UserCircle,
   reports: ChartBar,
+  rocket: RocketLaunch,
   search: MagnifyingGlass,
   sidebar: ListDashes,
   settings: GearSix,

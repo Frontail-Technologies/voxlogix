@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client";
 
-import { AppIcon } from "@/components/common/app-icon";
+import Link from "next/link";
+import { useState } from "react";
+
+import { AppIcon, type AppIconName } from "@/components/common/app-icon";
 import {
   DashboardCard,
   Table,
@@ -39,8 +42,24 @@ const draftField = {
   order: equipmentSchemaFields.length + 1,
 };
 
+const moduleIconOptions: { label: string; value: AppIconName }[] = [
+  { label: "Equipment", value: "equipment" },
+  { label: "Safety", value: "warning" },
+  { label: "Measurement", value: "status" },
+  { label: "Database", value: "database" },
+  { label: "Calendar", value: "calendar" },
+  { label: "Planning", value: "planning" },
+  { label: "AI", value: "ai" },
+  { label: "Package", value: "package" },
+  { label: "Activity", value: "activity" },
+  { label: "Voice", value: "voice" },
+];
+
 export function ModuleForm({ mode }: ModuleFormProps) {
   const isEdit = mode === "edit";
+  const [selectedIcon, setSelectedIcon] = useState<AppIconName>(
+    isEdit ? "equipment" : "modules",
+  );
 
   return (
     <div className="space-y-4 pb-32 sm:space-y-6 lg:pb-0">
@@ -95,6 +114,40 @@ export function ModuleForm({ mode }: ModuleFormProps) {
                 className="h-9 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
               />
             </div>
+          </div>
+          <div className="space-y-2 xl:col-span-2">
+            <Label>Module Icon</Label>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+              {moduleIconOptions.map((option) => {
+                const active = selectedIcon === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedIcon(option.value)}
+                    className={cn(
+                      "flex h-11 items-center gap-2 rounded-xl border border-border bg-secondary/70 px-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-primary/8",
+                      active &&
+                        "border-primary bg-primary/12 text-primary shadow-sm",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex size-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground",
+                        active && "bg-primary text-primary-foreground",
+                      )}
+                    >
+                      <AppIcon name={option.value} className="size-4" />
+                    </span>
+                    <span className="min-w-0 truncate font-medium">
+                      {option.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <input type="hidden" name="moduleIcon" value={selectedIcon} />
           </div>
           <div className="space-y-2 xl:col-span-2">
             <Label htmlFor="module-description">Description</Label>

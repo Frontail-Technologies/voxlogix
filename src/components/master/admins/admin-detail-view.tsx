@@ -23,15 +23,7 @@ export function AdminDetailView() {
       <DashboardPageHeader
         title="Admin Detail"
         description="Admin profile, assigned company, activity summary, and actions"
-        action={
-          <Link
-            href="/master/admins/john-doe/edit"
-            className={buttonVariants({ className: "rounded-xl" })}
-          >
-            <AppIcon name="settings" className="size-4" />
-            Edit Admin
-          </Link>
-        }
+        hideDescriptionOnMobile
       />
 
       <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_320px]">
@@ -45,10 +37,10 @@ export function AdminDetailView() {
 function AdminProfileCard() {
   return (
     <DashboardCard>
-      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Avatar className="size-16 rounded-full">
-            <AvatarFallback className="rounded-full bg-primary/12 text-lg font-semibold text-primary">
+      <CardContent className="space-y-3 p-3 sm:space-y-6 sm:p-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Avatar className="size-12 rounded-full border border-primary/20 bg-primary/12 sm:size-16">
+            <AvatarFallback className="text-base font-semibold text-primary sm:text-lg">
               {selectedAdmin.initials}
             </AvatarFallback>
           </Avatar>
@@ -112,7 +104,32 @@ function AdminQuickActions() {
 
   return (
     <>
-      <DashboardCard>
+      <div className="order-first grid grid-cols-3 gap-2 xl:hidden">
+        <Link
+          href="/master/admins/john-doe/edit"
+          className={cn(buttonVariants({ variant: "outline" }), "h-14 flex-col gap-1 rounded-xl px-1 text-xs")}
+        >
+          <AppIcon name="admins" className="size-4" />
+          Edit
+        </Link>
+        <Button
+          variant="outline"
+          className="h-14 flex-col gap-1 rounded-xl px-1 text-xs"
+          onClick={() => setResetDialogOpen(true)}
+        >
+          <AppIcon name="permissions" className="size-4" />
+          Reset
+        </Button>
+        <Button
+          variant="outline"
+          className="h-14 flex-col gap-1 rounded-xl px-1 text-xs text-destructive hover:text-destructive"
+        >
+          <AppIcon name="warning" className="size-4" />
+          Disable
+        </Button>
+      </div>
+
+      <DashboardCard className="hidden xl:block">
         <CardContent className="space-y-3 p-5">
           <h3 className="font-semibold">Actions</h3>
           <Link

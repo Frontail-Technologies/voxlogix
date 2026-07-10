@@ -1,16 +1,28 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
 import {
   DashboardCard,
   DashboardPageHeader,
   StatusBadge,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/common/dashboard-ui";
 import { buttonVariants } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { globalModules } from "@/data/mock-master";
 import { cn } from "@/lib/utils";
 
 export function ModulesList() {
+  const [tableView, setTableView] = useState(false);
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
@@ -27,6 +39,19 @@ export function ModulesList() {
         }
       />
 
+      <div className="flex items-center justify-end gap-3">
+        <span className="text-sm font-medium text-muted-foreground">Cards</span>
+        <Switch checked={tableView} onCheckedChange={setTableView} />
+        <span className="text-sm font-medium text-foreground">Table</span>
+      </div>
+
+      {tableView ? <ModulesTable /> : <ModulesCards />}
+    </div>
+  );
+}
+
+function ModulesCards() {
+  return (
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         {globalModules.map((module) => (
           <DashboardCard key={module.name} className="rounded-xl">
@@ -59,7 +84,7 @@ export function ModulesList() {
 
               <div className="flex items-center justify-between gap-3">
                 <span className="truncate text-xs font-medium text-muted-foreground">
-                  {module.availability}
+                  {module.availability} · {module.createdOn}
                 </span>
                 <StatusBadge status={module.status} />
               </div>
@@ -67,6 +92,60 @@ export function ModulesList() {
           </DashboardCard>
         ))}
       </div>
-    </div>
+  );
+}
+
+function ModulesTable() {
+  return (
+    <DashboardCard>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Module</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Availability</TableHead>
+            <TableHead>Fields</TableHead>
+            <TableHead>Created Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {globalModules.map((module) => (
+            <TableRow key={module.name}>
+              <TableCell>
+                <Link
+                  href="/master/modules/equipment/edit"
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/14 text-primary">
+                    <AppIcon name={module.icon} className="size-5" />
+                  </div>
+                  <span className="font-medium text-foreground">
+                    {module.name}
+                  </span>
+                </Link>
+              </TableCell>
+              <TableCell>{module.category}</TableCell>
+              <TableCell>{module.availability}</TableCell>
+              <TableCell>{module.fields}</TableCell>
+              <TableCell>{module.createdOn}</TableCell>
+              <TableCell>
+                <StatusBadge status={module.status} />
+              </TableCell>
+              <TableCell className="text-right">
+                <Link
+                  href="/master/modules/equipment/edit"
+                  className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  <AppIcon name="more" className="size-5" />
+                  <span className="sr-only">Module actions</span>
+                </Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </DashboardCard>
   );
 }

@@ -60,8 +60,8 @@ export function CompanyForm({ mode, values }: CompanyFormProps) {
               <Label>Company Logo</Label>
               <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-border bg-secondary/70 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                  <Avatar className="size-14 rounded-xl border border-border">
-                    <AvatarFallback className="rounded-xl bg-primary/12 text-primary">
+                  <Avatar className="size-14 rounded-full border border-primary/20 bg-primary/12">
+                    <AvatarFallback className="font-semibold text-primary">
                       {values?.logo ?? "VX"}
                     </AvatarFallback>
                   </Avatar>

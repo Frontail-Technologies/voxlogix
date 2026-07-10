@@ -19,15 +19,7 @@ export function CompanyDetailView() {
       <DashboardPageHeader
         title="Company Detail"
         description="Company overview, access, usage, modules, and quick actions"
-        action={
-          <Link
-            href="/master/companies/abc-industries/edit"
-            className={buttonVariants({ className: "rounded-xl" })}
-          >
-            <AppIcon name="settings" className="size-4" />
-            Edit Company
-          </Link>
-        }
+        hideDescriptionOnMobile
       />
 
       <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_320px]">
@@ -41,7 +33,7 @@ export function CompanyDetailView() {
 function CompanyOverviewCard() {
   return (
     <DashboardCard>
-      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
+      <CardContent className="space-y-3 p-3 sm:space-y-6 sm:p-6">
         <CompanyIdentity />
         <CompanyStatsGrid />
         <CompanyInfoGrid />
@@ -53,16 +45,18 @@ function CompanyOverviewCard() {
 
 function CompanyIdentity() {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-4">
-        <Avatar className="size-14 rounded-2xl">
-          <AvatarFallback className="rounded-2xl bg-accent text-lg font-semibold text-accent-foreground">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <Avatar className="size-10 rounded-full border border-primary/20 bg-primary/12 sm:size-14">
+          <AvatarFallback className="text-base font-semibold text-primary sm:text-lg">
             {selectedCompany.logo}
           </AvatarFallback>
         </Avatar>
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">{selectedCompany.company}</h2>
+            <h2 className="text-lg font-semibold sm:text-xl">
+              {selectedCompany.company}
+            </h2>
             <StatusBadge status={selectedCompany.status} />
           </div>
           <p className="text-sm text-muted-foreground">
@@ -150,44 +144,77 @@ function EnabledModules() {
 
 function CompanyQuickActions() {
   return (
-    <DashboardCard>
-      <CardContent className="space-y-3 p-5">
-        <h3 className="font-semibold">Quick Actions</h3>
+    <>
+      <div className="order-first grid grid-cols-4 gap-2 xl:hidden">
         <Link
           href="/master/companies/abc-industries/edit"
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "w-full justify-start rounded-xl",
-          )}
+          className={cn(buttonVariants({ variant: "outline" }), "h-14 flex-col gap-1 rounded-xl px-1 text-xs")}
         >
           <AppIcon name="companies" className="size-4" />
-          Edit Company
+          Edit
         </Link>
         <Link
           href="/master/companies/abc-industries/access"
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "w-full justify-start rounded-xl",
-          )}
+          className={cn(buttonVariants({ variant: "outline" }), "h-14 flex-col gap-1 rounded-xl px-1 text-xs")}
         >
           <AppIcon name="permissions" className="size-4" />
-          Access Control
+          Access
         </Link>
         <Link
           href="/master/companies/abc-industries/usage"
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "w-full justify-start rounded-xl",
-          )}
+          className={cn(buttonVariants({ variant: "outline" }), "h-14 flex-col gap-1 rounded-xl px-1 text-xs")}
         >
           <AppIcon name="ai" className="size-4" />
-          View Usage
+          Usage
         </Link>
-        <Button variant="destructive" className="w-full justify-start rounded-xl">
+        <Button
+          variant="outline"
+          className="h-14 flex-col gap-1 rounded-xl px-1 text-xs text-destructive hover:text-destructive"
+        >
           <AppIcon name="warning" className="size-4" />
-          Suspend Company
+          Suspend
         </Button>
-      </CardContent>
-    </DashboardCard>
+      </div>
+
+      <DashboardCard className="hidden xl:block">
+        <CardContent className="space-y-3 p-5">
+          <h3 className="font-semibold">Quick Actions</h3>
+          <Link
+            href="/master/companies/abc-industries/edit"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-start rounded-xl",
+            )}
+          >
+            <AppIcon name="companies" className="size-4" />
+            Edit Company
+          </Link>
+          <Link
+            href="/master/companies/abc-industries/access"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-start rounded-xl",
+            )}
+          >
+            <AppIcon name="permissions" className="size-4" />
+            Access Control
+          </Link>
+          <Link
+            href="/master/companies/abc-industries/usage"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "w-full justify-start rounded-xl",
+            )}
+          >
+            <AppIcon name="ai" className="size-4" />
+            View Usage
+          </Link>
+          <Button variant="destructive" className="w-full justify-start rounded-xl">
+            <AppIcon name="warning" className="size-4" />
+            Suspend Company
+          </Button>
+        </CardContent>
+      </DashboardCard>
+    </>
   );
 }

@@ -42,29 +42,40 @@ export function DashboardPageHeader({
   title,
   description,
   action,
+  hideDescriptionOnMobile = true,
 }: {
   title: string;
   description: string;
   action?: ReactNode;
+  hideDescriptionOnMobile?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 flex-1">
         <PageHeaderBreadcrumbs />
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <PageTitleBackButton />
-            <h1 className="truncate text-xl font-semibold tracking-normal text-foreground sm:text-2xl">
-              {title}
-            </h1>
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <PageTitleBackButton />
+              <h1 className="truncate text-xl font-semibold tracking-normal text-foreground sm:text-2xl">
+                {title}
+              </h1>
+            </div>
+            <p
+              className={cn(
+                "mt-1 text-sm text-muted-foreground",
+                hideDescriptionOnMobile && "hidden sm:block",
+              )}
+            >
+              {description}
+            </p>
           </div>
           {action ? (
-            <div className="[&_a]:size-9 [&_a]:gap-0 [&_a]:rounded-xl [&_a]:px-0 [&_a]:text-[0px] [&_button]:size-9 [&_button]:gap-0 [&_button]:rounded-xl [&_button]:px-0 [&_button]:text-[0px] [&_svg]:size-4 sm:hidden">
+            <div className="shrink-0 self-center [&_a]:size-9 [&_a]:gap-0 [&_a]:rounded-xl [&_a]:px-0 [&_a]:text-[0px] [&_button]:size-9 [&_button]:gap-0 [&_button]:rounded-xl [&_button]:px-0 [&_button]:text-[0px] [&_svg]:size-4 sm:hidden">
               {action}
             </div>
           ) : null}
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
       {action ? <div className="hidden sm:block">{action}</div> : null}
     </div>
@@ -118,19 +129,19 @@ export function StatusBadge({ status }: { status: string }) {
     normalized === "success" ||
     normalized === "completed" ||
     normalized === "enabled"
-      ? "bg-chart-2/14 text-chart-2"
+      ? "bg-emerald-500/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
       : normalized === "warning" ||
           normalized === "pending" ||
           normalized === "trial enabled"
-        ? "bg-primary/18 text-primary"
+        ? "bg-amber-500/16 text-amber-700 dark:bg-amber-400/18 dark:text-amber-300"
         : normalized === "suspended" ||
             normalized === "failed" ||
             normalized === "error" ||
             normalized === "blocked"
-        ? "bg-destructive/12 text-destructive"
+        ? "bg-red-500/12 text-red-700 dark:bg-red-400/16 dark:text-red-300"
         : normalized === "demo"
-          ? "bg-chart-4/14 text-chart-4"
-          : "bg-muted text-muted-foreground";
+          ? "bg-sky-500/12 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300"
+          : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 
   return (
     <Badge className={cn("rounded-md border-0", className)}>{status}</Badge>
@@ -178,7 +189,7 @@ export function UsageVisual({ points }: { points: number[] }) {
   const area = `0,${height} ${coords.join(" ")} ${width},${height}`;
 
   return (
-    <div className="h-72 w-full overflow-hidden rounded-xl bg-gradient-to-b from-background to-primary/8 p-4">
+    <div className="h-56 w-full overflow-hidden rounded-xl bg-gradient-to-b from-background to-primary/8 p-3 sm:h-72 sm:p-4">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
         {[0, 1, 2, 3, 4].map((line) => (
           <line

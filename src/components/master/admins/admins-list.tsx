@@ -114,6 +114,7 @@ function AdminsTable({ admins }: { admins: typeof import("@/data/mock-master").a
           <TableHead>Company</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Joined Date</TableHead>
           <TableHead>Last Login</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -129,8 +130,8 @@ function AdminsTable({ admins }: { admins: typeof import("@/data/mock-master").a
                   href={`/master/admins/${adminId}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="size-9 rounded-full">
-                    <AvatarFallback className="rounded-full bg-primary/12 text-xs font-semibold text-primary">
+                  <Avatar className="size-9 rounded-full border border-primary/20 bg-primary/12">
+                    <AvatarFallback className="text-xs font-semibold text-primary">
                       {admin.initials}
                     </AvatarFallback>
                   </Avatar>
@@ -145,6 +146,7 @@ function AdminsTable({ admins }: { admins: typeof import("@/data/mock-master").a
               <TableCell>
                 <StatusBadge status={admin.status} />
               </TableCell>
+              <TableCell>{admin.joinedOn}</TableCell>
               <TableCell>{admin.lastLogin}</TableCell>
               <TableCell className="text-right">
                 <AdminActionsMenu

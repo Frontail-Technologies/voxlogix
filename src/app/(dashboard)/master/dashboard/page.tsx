@@ -27,7 +27,7 @@ export default function MasterDashboardPage() {
 
       <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1.18fr_0.82fr]">
         <DashboardCard>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
             <div>
               <CardTitle>AI Usage Overview</CardTitle>
               <p className="text-sm text-muted-foreground">This Month</p>
@@ -36,19 +36,19 @@ export default function MasterDashboardPage() {
               This Month
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4 pt-1 sm:px-5 sm:pb-5 sm:pt-2">
             <UsageVisual points={aiChartPoints} />
           </CardContent>
         </DashboardCard>
 
         <DashboardCard>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
             <CardTitle>Recent Platform Activity</CardTitle>
             <Button variant="outline" size="sm" className="rounded-xl">
               View all
             </Button>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-5 px-4 pb-4 pt-1 sm:px-5 sm:pb-5 sm:pt-2">
             {recentPlatformActivity.map((item) => (
               <ActivityItem key={`${item.title}-${item.time}`} {...item} />
             ))}

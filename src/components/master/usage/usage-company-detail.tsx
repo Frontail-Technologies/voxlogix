@@ -44,8 +44,8 @@ export function UsageCompanyDetail() {
       <DashboardCard>
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <Avatar className="size-14 rounded-2xl">
-              <AvatarFallback className="rounded-2xl bg-accent text-lg font-semibold text-accent-foreground">
+            <Avatar className="size-14 rounded-full border border-primary/20 bg-primary/12">
+              <AvatarFallback className="text-lg font-semibold text-primary">
                 {selectedCompany.logo}
               </AvatarFallback>
             </Avatar>

@@ -42,8 +42,8 @@ export function AdminForm({ mode, values }: AdminFormProps) {
         <form className="space-y-8 pb-32 lg:pb-0">
           <div className="flex flex-col gap-4 rounded-2xl border border-border bg-secondary/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <Avatar className="size-14 rounded-full border border-border">
-                <AvatarFallback className="rounded-full bg-primary/12 text-primary">
+              <Avatar className="size-14 rounded-full border border-primary/20 bg-primary/12">
+                <AvatarFallback className="font-semibold text-primary">
                   {values?.initials ?? "AD"}
                 </AvatarFallback>
               </Avatar>

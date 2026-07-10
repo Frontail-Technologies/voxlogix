@@ -145,6 +145,7 @@ function UsageByCompanyTable() {
           <TableHead>Voice Minutes</TableHead>
           <TableHead>AI Logs</TableHead>
           <TableHead>Success Rate</TableHead>
+          <TableHead>Last Processed</TableHead>
           <TableHead>Share</TableHead>
           <TableHead className="text-right">Est Cost</TableHead>
         </TableRow>
@@ -160,8 +161,8 @@ function UsageByCompanyTable() {
                   href={`/master/usage/${companyId}`}
                   className="flex items-center gap-3"
                 >
-                  <Avatar className="size-9 rounded-xl">
-                    <AvatarFallback className="rounded-xl bg-accent text-xs font-semibold text-accent-foreground">
+                  <Avatar className="size-9 rounded-full border border-primary/20 bg-primary/12">
+                    <AvatarFallback className="text-xs font-semibold text-primary">
                       {usage.logo}
                     </AvatarFallback>
                   </Avatar>
@@ -173,6 +174,7 @@ function UsageByCompanyTable() {
               <TableCell>{usage.minutes}</TableCell>
               <TableCell>{usage.aiLogs}</TableCell>
               <TableCell>{usage.successRate}</TableCell>
+              <TableCell>{usage.lastProcessed}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <UsageProgress value={usage.percentage * 3.2} />
