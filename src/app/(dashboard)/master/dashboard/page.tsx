@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -13,6 +14,7 @@ import {
   DashboardStatCard,
 } from "@/components/common/dashboard-ui";
 import { MasterUsageChart } from "@/components/master/dashboard/master-usage-chart";
+import { MasterCardGridSkeleton } from "@/components/master/master-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Select,
@@ -45,6 +47,14 @@ const MONTH_OPTIONS = [
 ];
 
 export default function MasterDashboardPage() {
+  return (
+    <Suspense fallback={<MasterCardGridSkeleton />}>
+      <MasterDashboardPageContent />
+    </Suspense>
+  );
+}
+
+function MasterDashboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentDate = new Date();

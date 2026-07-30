@@ -1,7 +1,14 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { LogsView } from "@/components/admin/logs/logs-view";
+import { MasterCardGridSkeleton } from "@/components/master/master-skeletons";
 
 export default function AdminLogsPage() {
-  return <LogsView />;
+  return (
+    <Suspense fallback={<MasterCardGridSkeleton />}>
+      <LogsView />
+    </Suspense>
+  );
 }
