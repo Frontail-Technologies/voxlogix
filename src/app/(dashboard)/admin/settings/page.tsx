@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { CompanySettings } from "@/components/admin/settings/company-settings";
 
 export default function CompanySettingsPage() {
-  return <PageScaffold title="Company Settings" description="Company profile, logo, address, module colors, upload settings, AI visibility, and status settings." icon="settings" />;
+  return <CompanySettings />;
 }

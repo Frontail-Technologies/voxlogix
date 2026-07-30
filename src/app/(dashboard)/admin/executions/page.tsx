@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function ExecutionsPage() {
-  return <PageScaffold title="Execution Users" description="Execution user management for account status, assigned locations, activity, and log access." icon="users" />;
+  redirect("/admin/users?tab=execution");
 }

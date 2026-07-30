@@ -1,5 +1,14 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function MyLogsGridPage() {
-  return <PageScaffold title="My Logs Grid View" description="Visual card placeholder for own logs with module badge, status badge, date, and quick detail." icon="logs" />;
+import { Suspense } from "react";
+
+import { MyLogsView } from "@/components/execution/logs/my-logs-view";
+import { MasterCardGridSkeleton } from "@/components/master/master-skeletons";
+
+export default function ExecutionMyLogsGridPage() {
+  return (
+    <Suspense fallback={<MasterCardGridSkeleton />}>
+      <MyLogsView viewMode="grid" />
+    </Suspense>
+  );
 }

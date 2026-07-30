@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function EditExecutionPage() {
-  return <PageScaffold title="Edit Execution User" description="Placeholder editor for execution profile, location assignment, password reset, and status." icon="users" />;
+  redirect("/admin/users?tab=execution");
 }

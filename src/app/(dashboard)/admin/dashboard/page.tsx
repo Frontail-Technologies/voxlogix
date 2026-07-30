@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { AdminDashboard } from "@/components/admin/dashboard/admin-dashboard";
 
 export default function AdminDashboardPage() {
-  return <PageScaffold title="Admin Dashboard" description="Business-level logs, planners, execution users, equipment, AI logs, downtime, and activity." />;
+  return <AdminDashboard />;
 }

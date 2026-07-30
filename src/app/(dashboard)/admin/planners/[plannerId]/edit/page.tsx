@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function EditPlannerPage() {
-  return <PageScaffold title="Edit Planner" description="Placeholder planner editor with status, location assignment, and reset password controls." icon="planning" />;
+  redirect("/admin/users?tab=planners");
 }

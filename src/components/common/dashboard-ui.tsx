@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/common/app-icon";
+import { LoadingSpinner } from "@/components/common/loading-spinner";
 import {
   PageHeaderBreadcrumbs,
   PageTitleBackButton,
@@ -40,38 +41,28 @@ const toneClasses: Record<DashboardTone, string> = {
 
 export function DashboardPageHeader({
   title,
-  description,
   action,
-  hideDescriptionOnMobile = true,
 }: {
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
   hideDescriptionOnMobile?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
         <PageHeaderBreadcrumbs />
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <PageTitleBackButton />
-              <h1 className="truncate text-xl font-semibold tracking-normal text-foreground sm:text-2xl">
+              <h1 className="truncate text-lg font-semibold tracking-normal text-foreground sm:text-xl">
                 {title}
               </h1>
             </div>
-            <p
-              className={cn(
-                "mt-1 text-sm text-muted-foreground",
-                hideDescriptionOnMobile && "hidden sm:block",
-              )}
-            >
-              {description}
-            </p>
           </div>
           {action ? (
-            <div className="shrink-0 self-center [&_a]:size-9 [&_a]:gap-0 [&_a]:rounded-xl [&_a]:px-0 [&_a]:text-[0px] [&_button]:size-9 [&_button]:gap-0 [&_button]:rounded-xl [&_button]:px-0 [&_button]:text-[0px] [&_svg]:size-4 sm:hidden">
+            <div className="shrink-0 self-center [&>a]:size-9 [&>a]:gap-0 [&>a]:rounded-xl [&>a]:px-0 [&>a]:text-[0px] [&>button]:size-9 [&>button]:gap-0 [&>button]:rounded-xl [&>button]:px-0 [&>button]:text-[0px] [&_svg]:size-4 sm:hidden">
               {action}
             </div>
           ) : null}
@@ -88,16 +79,28 @@ export function DashboardStatCard({
   helper,
   icon,
   tone = "navy",
+  isLoading = false,
 }: {
   label: string;
   value: string;
   helper: string;
   icon: AppIconName;
   tone?: DashboardTone;
+  isLoading?: boolean;
 }) {
+  if (isLoading) {
+    return (
+      <Card className="min-h-[92px] rounded-2xl border-border bg-card shadow-sm sm:min-h-[106px]">
+        <CardContent className="flex h-full items-center justify-center p-3 sm:p-5">
+          <LoadingSpinner />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="rounded-2xl border-border bg-card shadow-sm">
-      <CardContent className="flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+    <Card className="min-h-[92px] rounded-2xl border-border bg-card shadow-sm sm:min-h-[106px]">
+      <CardContent className="flex h-full flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
         <div
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-xl sm:size-12",
@@ -173,57 +176,6 @@ export function ActionsButton() {
       <AppIcon name="more" className="size-5" />
       <span className="sr-only">Actions</span>
     </button>
-  );
-}
-
-export function UsageVisual({ points }: { points: number[] }) {
-  const width = 640;
-  const height = 220;
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const coords = points.map((value, index) => {
-    const x = (index / (points.length - 1)) * width;
-    const y = height - ((value - min) / (max - min || 1)) * (height - 36) - 18;
-    return `${x},${y}`;
-  });
-  const area = `0,${height} ${coords.join(" ")} ${width},${height}`;
-
-  return (
-    <div className="h-56 w-full overflow-hidden rounded-xl bg-gradient-to-b from-background to-primary/8 p-3 sm:h-72 sm:p-4">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-        {[0, 1, 2, 3, 4].map((line) => (
-          <line
-            key={line}
-            x1="0"
-            x2={width}
-            y1={(height / 4) * line}
-            y2={(height / 4) * line}
-            className="stroke-border"
-            strokeWidth="1"
-          />
-        ))}
-        <polygon points={area} className="fill-primary/12" />
-        <polyline
-          points={coords.join(" ")}
-          fill="none"
-          className="stroke-primary"
-          strokeWidth="3"
-        />
-        {coords.map((point, index) => {
-          const [cx, cy] = point.split(",");
-          return (
-            <circle
-              key={index}
-              cx={cx}
-              cy={cy}
-              r="4"
-              className="fill-card stroke-primary"
-              strokeWidth="2"
-            />
-          );
-        })}
-      </svg>
-    </div>
   );
 }
 

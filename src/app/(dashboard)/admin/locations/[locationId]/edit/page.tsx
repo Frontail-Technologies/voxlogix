@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { EditLocationClient } from "@/components/admin/master-data/edit-location-client";
 
 export default function EditLocationPage() {
-  return <PageScaffold title="Edit Location" description="Placeholder editor for plant, unit, area, location details, and status." icon="database" />;
+  const params = useParams<{ locationId: string }>();
+  return <EditLocationClient locationId={params.locationId} />;
 }

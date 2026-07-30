@@ -1,5 +1,13 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { ChangePasswordForm } from "@/components/common/change-password-form";
+import { DashboardPageHeader } from "@/components/common/dashboard-ui";
 
 export default function ExecutionChangePasswordPage() {
-  return <PageScaffold title="Change Password" description="Execution user password change placeholder." icon="permissions" />;
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <DashboardPageHeader title="Change Password" description="Update your account password." />
+      <ChangePasswordForm />
+    </div>
+  );
 }

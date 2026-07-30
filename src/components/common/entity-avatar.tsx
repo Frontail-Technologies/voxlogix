@@ -1,14 +1,16 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 type EntityAvatarProps = {
   initials: string;
+  imageUrl?: string;
   className?: string;
   fallbackClassName?: string;
 };
 
 export function EntityAvatar({
   initials,
+  imageUrl,
   className,
   fallbackClassName,
 }: EntityAvatarProps) {
@@ -19,6 +21,7 @@ export function EntityAvatar({
         className,
       )}
     >
+      {imageUrl ? <AvatarImage src={imageUrl} alt={initials} /> : null}
       <AvatarFallback
         className={cn("font-semibold text-primary", fallbackClassName)}
       >

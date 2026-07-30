@@ -1,5 +1,16 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { DashboardPageHeader } from "@/components/common/dashboard-ui";
+import { EquipmentForm } from "@/components/admin/equipment/equipment-form";
 
 export default function NewEquipmentPage() {
-  return <PageScaffold title="Add Equipment" description="Placeholder equipment form for asset ID, plant, unit, location, service dates, and notes." icon="equipment" />;
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <DashboardPageHeader
+        title="Add Equipment"
+        description="Register a new equipment asset for this company."
+      />
+      <EquipmentForm mode="create" />
+    </div>
+  );
 }

@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { EquipmentList } from "@/components/admin/equipment/equipment-list";
 
 export default function EquipmentPage() {
-  return <PageScaffold title="Equipment" description="Equipment table with search, status/location filters, service metadata, and log history placeholders." icon="equipment" />;
+  return <EquipmentList />;
 }

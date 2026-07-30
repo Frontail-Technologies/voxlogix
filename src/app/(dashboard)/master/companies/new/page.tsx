@@ -1,3 +1,5 @@
+"use client";
+
 import { DashboardPageHeader } from "@/components/common/dashboard-ui";
 import { CompanyForm } from "@/components/master/companies/company-form";
 

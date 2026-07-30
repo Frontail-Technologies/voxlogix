@@ -16,7 +16,7 @@ export const masterStats: MasterStat[] = [
   { label: "Total Execution Users", value: "256", helper: "View all executors", icon: "users", tone: "purple" },
   { label: "Total Logs", value: "12,540", helper: "All time logs", icon: "logs", tone: "red" },
   { label: "AI Processed Logs", value: "11,230", helper: "89.5% success rate", icon: "ai", tone: "blue" },
-  { label: "AI Usage This Month", value: "1,245 min", helper: "+12.5% vs last month", icon: "voice", tone: "teal" },
+  { label: "AI Usage This Month", value: "11,230", helper: "+12.5% vs last month", icon: "ai", tone: "teal" },
   { label: "Storage Used", value: "320 GB", helper: "45% of total storage", icon: "storage", tone: "blue" },
 ];
 
@@ -57,35 +57,33 @@ export const admins = [
 ];
 
 export const aiUsageStats = [
-  { label: "Total Voice Minutes", value: "1,245 min", helper: "+12.5% vs last month", icon: "voice" as AppIconName, tone: "teal" as const },
   { label: "Total AI Logs", value: "11,230", helper: "+8.0% vs last month", icon: "ai" as AppIconName, tone: "blue" as const },
   { label: "Success Rate", value: "89.5%", helper: "+4.2% vs last month", icon: "status" as AppIconName, tone: "green" as const },
   { label: "Estimated Cost", value: "$1,245.30", helper: "+10.3% vs last month", icon: "billing" as AppIconName, tone: "amber" as const },
 ];
 
 export const usageByCompany = [
-  { company: "ABC Industries", logo: "AI", minutes: "330 min", aiLogs: "2,980", successRate: "90.5%", percentage: 25.7, cost: "$328.00", lastProcessed: "31 May 2025" },
-  { company: "XYZ Pvt Ltd", logo: "XP", minutes: "280 min", aiLogs: "2,290", successRate: "87.2%", percentage: 22.5, cost: "$280.00", lastProcessed: "30 May 2025" },
-  { company: "LMN Corp", logo: "LC", minutes: "210 min", aiLogs: "2,090", successRate: "88.1%", percentage: 16.9, cost: "$210.00", lastProcessed: "29 May 2025" },
-  { company: "PQR Solutions", logo: "PS", minutes: "190 min", aiLogs: "1,400", successRate: "82.5%", percentage: 15.3, cost: "$190.00", lastProcessed: "28 May 2025" },
-  { company: "STU Enterprises", logo: "SE", minutes: "120 min", aiLogs: "1,300", successRate: "79.4%", percentage: 9.6, cost: "$126.00", lastProcessed: "27 May 2025" },
+  { company: "ABC Industries", logo: "AI", aiLogs: "2,980", successRate: "90.5%", percentage: 25.7, cost: "$328.00", lastProcessed: "31 May 2025" },
+  { company: "XYZ Pvt Ltd", logo: "XP", aiLogs: "2,290", successRate: "87.2%", percentage: 22.5, cost: "$280.00", lastProcessed: "30 May 2025" },
+  { company: "LMN Corp", logo: "LC", aiLogs: "2,090", successRate: "88.1%", percentage: 16.9, cost: "$210.00", lastProcessed: "29 May 2025" },
+  { company: "PQR Solutions", logo: "PS", aiLogs: "1,400", successRate: "82.5%", percentage: 15.3, cost: "$190.00", lastProcessed: "28 May 2025" },
+  { company: "STU Enterprises", logo: "SE", aiLogs: "1,300", successRate: "79.4%", percentage: 9.6, cost: "$126.00", lastProcessed: "27 May 2025" },
 ];
 
 export const selectedUsageCompanyStats = [
-  { label: "Voice Minutes", value: "330 min", helper: "+12.2% this month", icon: "voice" as AppIconName, tone: "teal" as const },
   { label: "AI Processed Logs", value: "2,980", helper: "90.5% success rate", icon: "ai" as AppIconName, tone: "blue" as const },
   { label: "Failed Requests", value: "312", helper: "Mostly unclear audio", icon: "warning" as AppIconName, tone: "red" as const },
-  { label: "Estimated Cost", value: "$328.00", helper: "$0.99 per minute avg", icon: "billing" as AppIconName, tone: "amber" as const },
+  { label: "Estimated Cost", value: "$328.00", helper: "Current month", icon: "billing" as AppIconName, tone: "amber" as const },
 ];
 
 export const usageDailyBreakdown = [
-  { date: "01 May", minutes: "24 min", aiLogs: "210", failed: "18", cost: "$24.00" },
-  { date: "06 May", minutes: "32 min", aiLogs: "286", failed: "21", cost: "$31.50" },
-  { date: "11 May", minutes: "28 min", aiLogs: "244", failed: "30", cost: "$27.80" },
-  { date: "16 May", minutes: "42 min", aiLogs: "390", failed: "36", cost: "$41.60" },
-  { date: "21 May", minutes: "35 min", aiLogs: "318", failed: "24", cost: "$34.70" },
-  { date: "26 May", minutes: "51 min", aiLogs: "470", failed: "40", cost: "$50.40" },
-  { date: "31 May", minutes: "62 min", aiLogs: "560", failed: "47", cost: "$61.80" },
+  { date: "01 May", aiLogs: "210", failed: "18", cost: "$24.00" },
+  { date: "06 May", aiLogs: "286", failed: "21", cost: "$31.50" },
+  { date: "11 May", aiLogs: "244", failed: "30", cost: "$27.80" },
+  { date: "16 May", aiLogs: "390", failed: "36", cost: "$41.60" },
+  { date: "21 May", aiLogs: "318", failed: "24", cost: "$34.70" },
+  { date: "26 May", aiLogs: "470", failed: "40", cost: "$50.40" },
+  { date: "31 May", aiLogs: "560", failed: "47", cost: "$61.80" },
 ];
 
 export const settingsTabs = [
@@ -104,7 +102,7 @@ export const selectedCompany = {
     { label: "Planners", value: "12" },
     { label: "Execution Users", value: "45" },
     { label: "Total Logs", value: "2,540" },
-    { label: "AI Usage This Month", value: "320 min" },
+    { label: "AI Usage This Month", value: "2,540 logs" },
   ],
 };
 
@@ -122,7 +120,6 @@ export const companyAccessToggles = [
 ];
 
 export const companyUsageStats = [
-  { label: "Voice Minutes", value: "320 min", helper: "+9.8% this month", icon: "voice" as AppIconName, tone: "teal" as const },
   { label: "AI Logs", value: "2,540", helper: "89.5% success", icon: "ai" as AppIconName, tone: "blue" as const },
   { label: "Storage Used", value: "84 GB", helper: "26% of limit", icon: "storage" as AppIconName, tone: "navy" as const },
   { label: "Est. Cost", value: "$320.00", helper: "This month", icon: "billing" as AppIconName, tone: "amber" as const },

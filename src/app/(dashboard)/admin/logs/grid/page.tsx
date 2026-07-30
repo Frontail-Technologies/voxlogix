@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function AdminLogsGridPage() {
-  return <PageScaffold title="Logs Grid View" description="Visual log cards with module, status, severity, and media preview placeholders." icon="logs" />;
+import { redirect } from "next/navigation";
+
+export default function LogsGridPage() {
+  redirect("/admin/logs");
 }

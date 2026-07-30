@@ -1,5 +1,15 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function ModuleSchemaPage() {
-  return <PageScaffold title="Module Field Schema" description="Dynamic module field schema placeholder for future AI extraction and form rendering." icon="modules" />;
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function ModuleSchemaRedirectPage() {
+  const params = useParams<{ moduleId: string }>();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(`/admin/modules/${params.moduleId}`);
+  }, [params.moduleId, router]);
+
+  return null;
 }

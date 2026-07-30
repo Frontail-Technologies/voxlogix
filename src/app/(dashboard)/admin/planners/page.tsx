@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function PlannersPage() {
-  return <PageScaffold title="Planners" description="Planner user list with search, status filters, assignment, and password reset placeholders." icon="planning" />;
+  redirect("/admin/users?tab=planners");
 }

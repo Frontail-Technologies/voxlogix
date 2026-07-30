@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function EditDraftLogPage() {
-  return <PageScaffold title="Edit Draft Log" description="Draft editing placeholder for continuing submission and adding media before final submit." icon="logs" />;
+import { useParams } from "next/navigation";
+
+import { EditDraftLogView } from "@/components/execution/logs/edit-draft-log-view";
+
+export default function ExecutionEditDraftLogPage() {
+  const params = useParams<{ logId: string }>();
+  return <EditDraftLogView logId={params.logId} />;
 }

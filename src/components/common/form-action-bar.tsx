@@ -9,6 +9,7 @@ type FormActionBarProps = {
   submitLabel: string;
   submitIcon?: AppIconName;
   className?: string;
+  isSubmitting?: boolean;
 };
 
 export function FormActionBar({
@@ -16,11 +17,12 @@ export function FormActionBar({
   submitLabel,
   submitIcon,
   className,
+  isSubmitting,
 }: FormActionBarProps) {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-border bg-card/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:justify-end lg:static lg:mx-0 lg:mb-0 lg:border-t lg:bg-transparent lg:p-0 lg:pt-6 lg:shadow-none lg:backdrop-blur-none",
+        "fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t border-border bg-card/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:justify-end md:left-(--sidebar-width) lg:px-8",
         className,
       )}
     >
@@ -28,14 +30,18 @@ export function FormActionBar({
         href={cancelHref}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "h-11 flex-1 rounded-xl lg:h-8 lg:flex-none",
+          "h-10 flex-1 rounded-xl lg:flex-none",
         )}
       >
         Cancel
       </Link>
-      <Button type="button" className="h-11 flex-1 rounded-xl lg:h-8 lg:flex-none">
+      <Button
+        type="submit"
+        className="h-10 flex-1 rounded-xl lg:flex-none"
+        disabled={isSubmitting}
+      >
         {submitIcon ? <AppIcon name={submitIcon} className="size-4" /> : null}
-        {submitLabel}
+        {isSubmitting ? "Saving..." : submitLabel}
       </Button>
     </div>
   );

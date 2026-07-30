@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { ReportsOverview } from "@/components/admin/reports/admin-reports";
 
 export default function ReportsPage() {
-  return <PageScaffold title="Reports" description="Reports overview for logs, equipment, execution activity, downtime, and export placeholders." icon="reports" />;
+  return <ReportsOverview />;
 }

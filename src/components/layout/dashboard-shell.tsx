@@ -1,16 +1,19 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { AppIcon } from "@/components/common/app-icon";
+import { DynamicBreadcrumbProvider } from "@/components/common/page-header-navigation";
 import { ThemeWhoosh } from "@/components/common/theme-whoosh";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogoutButton } from "@/components/common/logout-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,8 +30,25 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ROLE_NAVIGATION } from "@/config/navigation";
+import { prefetchAdminDashboardSummary } from "@/features/admin-dashboard/api/dashboard.queries";
+import { getEquipment } from "@/features/admin-equipment/api/equipment.queries";
+import { adminEquipmentKeys } from "@/features/admin-equipment/api/equipment.keys";
+import { getLogs } from "@/features/logs/api/log.queries";
+import { adminLogKeys } from "@/features/logs/api/log.keys";
+import { getAdmins } from "@/features/master-admins/api/admin.queries";
+import { adminKeys } from "@/features/master-admins/api/admin.keys";
+import { getCompanies } from "@/features/master-companies/api/company.queries";
+import { companyKeys } from "@/features/master-companies/api/company.keys";
+import { getModules } from "@/features/master-modules/api/module.queries";
+import { moduleKeys } from "@/features/master-modules/api/module.keys";
+import { getUsageOverview } from "@/features/master-usage/api/usage.queries";
+import { usageKeys } from "@/features/master-usage/api/usage.keys";
+import { getActivities } from "@/features/master-activities/api/activity.queries";
+import { activityKeys } from "@/features/master-activities/api/activity.keys";
+import { listQueryOptions, detailQueryOptions } from "@/lib/api/query-options";
+import { useAuth } from "@/features/auth/auth-provider";
 import { shouldShowMobileHeader } from "@/config/layout";
-import { ROLE_LABELS, type UserRole } from "@/config/roles";
+import { ROLE_LABELS, ROLE_SESSION_IDENTITY, type UserRole } from "@/config/roles";
 import { cn } from "@/lib/utils";
 
 function roleFromPath(pathname: string): UserRole {
@@ -40,13 +60,48 @@ function roleFromPath(pathname: string): UserRole {
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const { user, company } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const whooshTimer = useRef<number | null>(null);
   const [themeWhooshActive, setThemeWhooshActive] = useState(false);
   const role = roleFromPath(pathname);
-  const navItems = ROLE_NAVIGATION[role];
+  const adminModulesQuery = useQuery({
+    queryKey: moduleKeys.list({ page: 1, limit: 100, status: "ACTIVE" }),
+    queryFn: () => getModules({ page: 1, limit: 100, status: "ACTIVE" }),
+    enabled: role === "admin",
+    ...listQueryOptions,
+  });
+  const enabledAdminModules = new Set(
+    (adminModulesQuery.data?.data ?? []).map((module) => module.name.trim().toLowerCase()),
+  );
+  const navItems = ROLE_NAVIGATION[role].filter((item) => {
+    if (role !== "admin" || !item.requiredModules?.length) return true;
+    if (adminModulesQuery.isLoading || adminModulesQuery.isError) return false;
+    return item.requiredModules.some((moduleName) => enabledAdminModules.has(moduleName));
+  });
   const showMobileHeader = shouldShowMobileHeader(pathname);
-  const darkMode = resolvedTheme === "dark";
+  const hasFixedBottomActions =
+    pathname.endsWith("/new") ||
+    pathname.endsWith("/edit") ||
+    pathname.includes("/create-log");
+  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const darkMode = mounted && resolvedTheme === "dark";
+  const sessionName = user?.fullName ?? ROLE_SESSION_IDENTITY[role].name;
+  const sessionInitials = user?.initials ?? ROLE_SESSION_IDENTITY[role].initials;
+  const sessionMeta = company?.name ?? ROLE_LABELS[role];
+
+  function prefetchRoute(href: string) {
+    if (href === "/admin/dashboard") void prefetchAdminDashboardSummary(queryClient);
+    else if (href === "/admin/logs") void queryClient.prefetchQuery({ queryKey: adminLogKeys.list({ page: 1, limit: 20 }), queryFn: () => getLogs({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/admin/equipment") void queryClient.prefetchQuery({ queryKey: adminEquipmentKeys.list({ page: 1, limit: 20 }), queryFn: () => getEquipment({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/admin/users") void queryClient.prefetchQuery({ queryKey: adminKeys.list({ page: 1, limit: 20 }), queryFn: () => getAdmins({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/admin/modules" || href === "/master/modules") void queryClient.prefetchQuery({ queryKey: moduleKeys.list({ page: 1, limit: 20 }), queryFn: () => getModules({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/master/companies") void queryClient.prefetchQuery({ queryKey: companyKeys.list({ page: 1, limit: 20 }), queryFn: () => getCompanies({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/master/admins") void queryClient.prefetchQuery({ queryKey: adminKeys.list({ page: 1, limit: 20 }), queryFn: () => getAdmins({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/master/usage") void queryClient.prefetchQuery({ queryKey: usageKeys.overview(undefined), queryFn: () => getUsageOverview(undefined), ...detailQueryOptions });
+    else if (href === "/master/activities") void queryClient.prefetchQuery({ queryKey: activityKeys.list({ page: 1, limit: 20 }), queryFn: () => getActivities({ page: 1, limit: 20 }), ...listQueryOptions });
+  }
 
   function toggleTheme(checked: boolean) {
     if (whooshTimer.current) {
@@ -64,7 +119,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
+    <DynamicBreadcrumbProvider>
+      <SidebarProvider>
       <ThemeWhoosh active={themeWhooshActive} />
       <Sidebar
         collapsible="icon"
@@ -109,6 +165,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                         render={<Link href={item.href} />}
                         isActive={active}
                         tooltip={item.title}
+                        onMouseEnter={() => prefetchRoute(item.href)}
+                        onFocus={() => prefetchRoute(item.href)}
                         className={cn(
                           "h-10 rounded-xl px-3 text-sidebar-foreground/86 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:p-0",
                           active &&
@@ -139,14 +197,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               onCheckedChange={toggleTheme}
             />
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/70 p-2 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:border-sidebar-accent/70 group-data-[collapsible=icon]:p-1">
-            <Avatar className="size-10 group-data-[collapsible=icon]:size-8">
-              <AvatarFallback>VX</AvatarFallback>
+          <div className="flex items-center gap-2 rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/70 p-2 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:border-sidebar-accent/70 group-data-[collapsible=icon]:p-1">
+            <Avatar className="size-10 rounded-full group-data-[collapsible=icon]:size-8">
+              {user?.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={sessionName} /> : null}
+              <AvatarFallback>{sessionInitials}</AvatarFallback>
             </Avatar>
-            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-semibold">Master Super</p>
-              <p className="text-xs text-sidebar-foreground/70">Mock session</p>
+            <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+              <p className="text-sm font-semibold">{sessionName}</p>
+              <p className="truncate text-xs text-sidebar-foreground/70">{sessionMeta}</p>
             </div>
+            <LogoutButton iconOnly variant="ghost" className="shrink-0 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
           </div>
         </SidebarFooter>
       </Sidebar>
@@ -203,13 +263,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         ) : null}
         <div
           className={cn(
-            "mx-auto w-full container px-3 sm:px-4 sm:py-6 lg:px-8",
-            showMobileHeader ? "py-4" : "py-5",
+            "mx-auto w-full container px-3 sm:px-4 sm:pt-6 lg:px-8",
+            showMobileHeader ? "pt-4" : "pt-5",
+            hasFixedBottomActions ? "pb-40" : "pb-5 sm:pb-6",
           )}
         >
           {children}
         </div>
       </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
+    </DynamicBreadcrumbProvider>
   );
 }
+
+
+
+

@@ -1,3 +1,5 @@
+"use client";
+
 import { AdminsList } from "@/components/master/admins/admins-list";
 
 export default function AdminsPage() {

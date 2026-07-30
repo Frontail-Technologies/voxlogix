@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { LogsView } from "@/components/admin/logs/logs-view";
 
 export default function AdminLogsPage() {
-  return <PageScaffold title="Logs" description="Combined logs list with search, filters, grid/table switcher, status controls, and export placeholder." icon="logs" />;
+  return <LogsView />;
 }

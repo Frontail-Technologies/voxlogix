@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function NewPlannerPage() {
-  return <PageScaffold title="Add Planner" description="Placeholder planner creation form with assigned plant/location and status." icon="planning" />;
+  redirect("/admin/users?tab=planners");
 }

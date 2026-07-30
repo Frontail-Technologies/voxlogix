@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function AdminLogDetailPage() {
-  return <PageScaffold title="Log Detail" description="Log summary, transcript, AI structured fields, media, timeline, notes, and creator details." icon="logs" />;
+import { useParams } from "next/navigation";
+
+import { LogDetailView } from "@/components/admin/logs/log-detail-view";
+
+export default function LogDetailPage() {
+  const params = useParams<{ logId: string }>();
+  return <LogDetailView logId={params.logId} />;
 }

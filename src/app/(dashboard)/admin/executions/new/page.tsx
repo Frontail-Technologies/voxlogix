@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { redirect } from "next/navigation";
 
 export default function NewExecutionPage() {
-  return <PageScaffold title="Add Execution User" description="Placeholder execution user form with username, contact details, location, and status." icon="users" />;
+  redirect("/admin/users?tab=execution");
 }

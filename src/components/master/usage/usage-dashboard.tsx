@@ -1,10 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
 import {
   DashboardCard,
   DashboardPageHeader,
-  DashboardStatCard,
   Table,
   TableBody,
   TableCell,
@@ -12,204 +14,115 @@ import {
   TableHeader,
   TableRow,
   UsageProgress,
-  UsageVisual,
 } from "@/components/common/dashboard-ui";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { EntityAvatar } from "@/components/common/entity-avatar";
+import { TablePagination } from "@/components/common/table-pagination";
+import { MasterTableSkeleton } from "@/components/master/master-skeletons";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { aiChartPoints, aiUsageStats, usageByCompany } from "@/data/mock-master";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import type { UsagePeriod, UsageCompanyRow } from "@/features/master-usage/api/usage.types";
+import { useUsageCompanies } from "@/features/master-usage/api/usage.queries";
 import { cn } from "@/lib/utils";
 
+const periods: Array<{ label: string; value: UsagePeriod }> = [
+  { label: "This Month", value: "THIS_MONTH" },
+  { label: "Last Month", value: "LAST_MONTH" },
+  { label: "This Quarter", value: "THIS_QUARTER" },
+];
+
 export function UsageDashboard() {
+  const [period, setPeriod] = useState<UsagePeriod>("THIS_MONTH");
+  const [page, setPage] = useState(1);
+  const [companyId, setCompanyId] = useState("all");
+  const companiesQuery = useUsageCompanies({ page, limit: 20, period, companyId: companyId === "all" ? undefined : companyId });
+  const usageRows = companiesQuery.data?.data ?? [];
+  const meta = companiesQuery.data?.meta;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="AI Usage Dashboard"
         description="Monitor AI usage, cost, and success rate across companies"
-        action={
-          <Link
-            href="/master/settings"
-            className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}
-          >
-            <AppIcon name="settings" className="size-4" />
-            AI Settings
-          </Link>
-        }
       />
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {aiUsageStats.map((stat) => (
-          <DashboardStatCard key={stat.label} {...stat} />
-        ))}
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <PeriodSelect value={period} onChange={setPeriod} />
+        <CompanySelect
+          value={companyId}
+          rows={usageRows}
+          onChange={(value) => {
+            setCompanyId(value);
+            setPage(1);
+          }}
+        />
+        <Link href="/master/settings" className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}>
+          <AppIcon name="settings" className="size-4" />
+          AI Settings
+        </Link>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[1fr_420px]">
-        <DashboardCard>
-          <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-semibold text-card-foreground">
-                Date-wise Usage
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Mock voice minutes and AI processing trend
-              </p>
-            </div>
-            <PeriodSelect />
-          </div>
-          <div className="p-5">
-            <UsageVisual points={aiChartPoints} />
-          </div>
-        </DashboardCard>
-
-        <DashboardCard>
-          <div className="border-b border-border p-5">
-            <h2 className="font-semibold text-card-foreground">Usage Summary</h2>
-            <p className="text-sm text-muted-foreground">
-              Current month platform usage mix
-            </p>
-          </div>
-          <div className="space-y-4 p-5">
-            {usageByCompany.slice(0, 4).map((usage) => (
-              <div key={usage.company} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">
-                    {usage.company}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {usage.percentage}%
-                  </span>
-                </div>
-                <UsageProgress value={usage.percentage * 3.2} />
-              </div>
-            ))}
-          </div>
-        </DashboardCard>
-      </div>
-
-      <UsageByCompanySection />
+      <UsageByCompanySection rows={usageRows} isLoading={companiesQuery.isLoading} isError={companiesQuery.isError} meta={meta} page={page} onPageChange={setPage} />
     </div>
   );
 }
 
-function UsageByCompanySection() {
+function UsageByCompanySection({ rows, isLoading, isError, meta, page, onPageChange }: { rows: UsageCompanyRow[]; isLoading: boolean; isError: boolean; meta?: { page: number; limit: number; offset: number; totalItems: number; totalPages: number; hasPreviousPage: boolean; hasNextPage: boolean }; page: number; onPageChange: (page: number) => void }) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-semibold text-card-foreground">
-            Usage by Company
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Company-wise voice minutes, AI logs, success rate, and cost
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <PeriodSelect />
-          <Select defaultValue="All Companies">
-            <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 sm:w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All Companies">All Companies</SelectItem>
-              {usageByCompany.map((usage) => (
-                <SelectItem key={usage.company} value={usage.company}>
-                  {usage.company}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
       <DashboardCard>
-        <UsageByCompanyTable />
+        {isLoading ? <MasterTableSkeleton columns={7} /> : null}
+        {isError ? <p className="p-5 text-sm text-muted-foreground">Could not load company usage.</p> : null}
+        {!isLoading && !isError ? <UsageByCompanyTable rows={rows} /> : null}
       </DashboardCard>
-      <p className="px-1 text-sm text-muted-foreground">
-        Showing 1 to 5 of 24 companies
-      </p>
+      {meta ? <TablePagination page={meta.page} totalPages={meta.totalPages} startItem={meta.totalItems ? meta.offset + 1 : 0} endItem={Math.min(meta.offset + meta.limit, meta.totalItems)} totalItems={meta.totalItems} canPrevious={meta.hasPreviousPage} canNext={meta.hasNextPage} onPageChange={onPageChange} onPrevious={() => onPageChange(Math.max(1, page - 1))} onNext={() => onPageChange(page + 1)} /> : null}
     </div>
   );
 }
 
-function UsageByCompanyTable() {
+function CompanySelect({ value, rows, onChange }: { value: string; rows: UsageCompanyRow[]; onChange: (value: string) => void }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Company</TableHead>
-          <TableHead>Voice Minutes</TableHead>
-          <TableHead>AI Logs</TableHead>
-          <TableHead>Success Rate</TableHead>
-          <TableHead>Last Processed</TableHead>
-          <TableHead>Share</TableHead>
-          <TableHead className="text-right">Est Cost</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {usageByCompany.map((usage) => {
-          const companyId = toId(usage.company);
-
-          return (
-            <TableRow key={usage.company}>
-              <TableCell>
-                <Link
-                  href={`/master/usage/${companyId}`}
-                  className="flex items-center gap-3"
-                >
-                  <Avatar className="size-9 rounded-full border border-primary/20 bg-primary/12">
-                    <AvatarFallback className="text-xs font-semibold text-primary">
-                      {usage.logo}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-foreground">
-                    {usage.company}
-                  </span>
-                </Link>
-              </TableCell>
-              <TableCell>{usage.minutes}</TableCell>
-              <TableCell>{usage.aiLogs}</TableCell>
-              <TableCell>{usage.successRate}</TableCell>
-              <TableCell>{usage.lastProcessed}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <UsageProgress value={usage.percentage * 3.2} />
-                  <span className="w-12 text-sm text-muted-foreground">
-                    {usage.percentage}%
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">{usage.cost}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
-
-function PeriodSelect() {
-  return (
-    <Select defaultValue="This Month">
-      <SelectTrigger className="h-10 w-full rounded-xl bg-secondary/70 sm:w-36">
-        <SelectValue />
+    <Select value={value} onValueChange={(next) => next && onChange(next)}>
+      <SelectTrigger className="h-10 min-w-40 flex-1 rounded-xl bg-secondary/70 sm:w-44 sm:flex-none">
+        <span className="truncate">{value === "all" ? "All Companies" : rows.find((usage) => usage.company.id === value)?.company.name ?? "Company"}</span>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="This Month">This Month</SelectItem>
-        <SelectItem value="Last Month">Last Month</SelectItem>
-        <SelectItem value="This Quarter">This Quarter</SelectItem>
+        <SelectItem value="all">All Companies</SelectItem>
+        {rows.map((usage) => <SelectItem key={usage.company.id} value={usage.company.id}>{usage.company.name}</SelectItem>)}
       </SelectContent>
     </Select>
   );
 }
 
-function toId(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+function UsageByCompanyTable({ rows }: { rows: UsageCompanyRow[] }) {
+  return (
+    <Table>
+      <TableHeader><TableRow><TableHead>Company</TableHead><TableHead>AI Logs</TableHead><TableHead>Failures</TableHead><TableHead>Success Rate</TableHead><TableHead>Last Processed</TableHead><TableHead>Share</TableHead><TableHead className="text-right">Est Cost</TableHead></TableRow></TableHeader>
+      <TableBody>
+        {rows.length ? rows.map((usage) => (
+          <TableRow key={usage.company.id}>
+            <TableCell><Link href={`/master/usage/${usage.company.id}`} className="flex items-center gap-3"><EntityAvatar initials={usage.company.logo ?? initials(usage.company.name)} className="size-9" fallbackClassName="text-xs" /><span className="font-medium text-foreground">{usage.company.name}</span></Link></TableCell>
+            <TableCell>{formatNumber(usage.aiLogs)}</TableCell>
+            <TableCell>{formatNumber(usage.failedRequests)}</TableCell>
+            <TableCell>{usage.successRate}%</TableCell>
+            <TableCell>{formatDate(usage.lastProcessedAt)}</TableCell>
+            <TableCell><div className="flex items-center gap-3"><UsageProgress value={usage.sharePercentage} /><span className="w-12 text-sm text-muted-foreground">{usage.sharePercentage}%</span></div></TableCell>
+            <TableCell className="text-right">{formatCurrency(usage.estimatedCost)}</TableCell>
+          </TableRow>
+        )) : <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">No usage records found.</TableCell></TableRow>}
+      </TableBody>
+    </Table>
+  );
 }
+
+function PeriodSelect({ value, onChange }: { value: UsagePeriod; onChange: (value: UsagePeriod) => void }) {
+  return (
+    <Select value={value} onValueChange={(next) => onChange(next as UsagePeriod)}>
+      <SelectTrigger className="h-10 min-w-36 flex-1 rounded-xl bg-secondary/70 sm:w-36 sm:flex-none"><span className="truncate">{periods.find((period) => period.value === value)?.label ?? "Period"}</span></SelectTrigger>
+      <SelectContent>{periods.map((period) => <SelectItem key={period.value} value={period.value}>{period.label}</SelectItem>)}</SelectContent>
+    </Select>
+  );
+}
+
+function initials(value: string) { return value.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
+function formatNumber(value: number) { return new Intl.NumberFormat("en-US").format(value); }
+function formatCurrency(value: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value); }
+function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)) : "-"; }

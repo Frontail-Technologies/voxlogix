@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function MyLogDetailPage() {
-  return <PageScaffold title="My Log Detail" description="Own log detail placeholder with transcript, AI structured fields, uploaded media, timeline, and notes." icon="logs" />;
+import { useParams } from "next/navigation";
+
+import { MyLogDetailView } from "@/components/execution/logs/my-log-detail-view";
+
+export default function ExecutionMyLogDetailPage() {
+  const params = useParams<{ logId: string }>();
+  return <MyLogDetailView logId={params.logId} />;
 }

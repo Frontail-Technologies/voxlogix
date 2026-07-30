@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { ExecutionDashboard } from "@/components/execution/dashboard/execution-dashboard";
 
 export default function ExecutionDashboardPage() {
-  return <PageScaffold title="Execution Dashboard" description="Today logs, own submitted logs, drafts, completed logs, correction logs, and recent activity." />;
+  return <ExecutionDashboard />;
 }

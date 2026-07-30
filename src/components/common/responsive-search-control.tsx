@@ -1,63 +1,62 @@
-"use client";
+﻿"use client";
+
+import { useRef, type ChangeEvent } from "react";
 
 import { AppIcon } from "@/components/common/app-icon";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+const DEFAULT_SEARCH_DEBOUNCE_MS = 280;
 
 type ResponsiveSearchControlProps = {
   placeholder: string;
   desktopClassName?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  debounceMs?: number;
 };
 
 export function ResponsiveSearchControl({
   placeholder,
   desktopClassName = "lg:max-w-xs",
+  value,
+  onChange,
+  debounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: ResponsiveSearchControlProps) {
+  const timeoutRef = useRef<number | null>(null);
+  const controlledValue = value ?? "";
+
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextValue = event.target.value;
+
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = window.setTimeout(() => {
+      onChange?.(nextValue);
+      timeoutRef.current = null;
+    }, debounceMs);
+  }
+
+  const inputProps = {
+    defaultValue: controlledValue,
+    onChange: handleChange,
+  };
+
   return (
-    <>
-      <div className={`relative hidden w-full lg:block ${desktopClassName}`}>
-        <AppIcon
-          name="search"
-          className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          placeholder={placeholder}
-          className="h-10 rounded-xl bg-secondary/70 pl-9"
-        />
-      </div>
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              className="size-9 rounded-xl bg-secondary/70 p-0 lg:hidden"
-            />
-          }
-        >
-          <AppIcon name="search" className="size-3.5" />
-          <span className="sr-only">{placeholder}</span>
-        </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          sideOffset={8}
-          className="w-[min(calc(100vw-1.5rem),22rem)] rounded-xl p-3"
-        >
-          <div className="relative">
-            <AppIcon
-              name="search"
-              className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              autoFocus
-              placeholder={placeholder}
-              className="h-10 rounded-xl bg-secondary/70 pl-9"
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
-    </>
+    <div className={cn("relative min-w-0 basis-full sm:basis-auto sm:flex-none", desktopClassName)}>
+      <AppIcon
+        name="search"
+        className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        key={controlledValue}
+        {...inputProps}
+        placeholder={placeholder}
+        className="h-10 rounded-xl bg-secondary/70 pl-9"
+      />
+    </div>
   );
 }
+

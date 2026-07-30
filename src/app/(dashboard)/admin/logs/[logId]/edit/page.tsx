@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { EditLogClient } from "@/components/admin/logs/edit-log-client";
 
 export default function AdminEditLogPage() {
-  return <PageScaffold title="Edit Log" description="Placeholder log edit form for details, root cause, action taken, downtime, severity, and status." icon="logs" />;
+  const params = useParams<{ logId: string }>();
+  return <EditLogClient logId={params.logId} />;
 }

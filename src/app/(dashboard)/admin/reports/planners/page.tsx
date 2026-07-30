@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+﻿"use client";
+
+import { ReportDetail } from "@/components/admin/reports/admin-reports";
 
 export default function PlannerReportPage() {
-  return <PageScaffold title="Planner Report" description="Planner workload, status updates, verification activity, and planning remarks placeholder." icon="reports" />;
+  return <ReportDetail type="users" />;
 }

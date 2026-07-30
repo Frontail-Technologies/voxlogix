@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { EditIssueCategoryClient } from "@/components/admin/master-data/edit-issue-category-client";
 
 export default function EditIssueCategoryPage() {
-  return <PageScaffold title="Edit Issue Category" description="Placeholder editor for issue function, sub-function, category, failure mode, and spare reference." icon="modules" />;
+  const params = useParams<{ issueCategoryId: string }>();
+  return <EditIssueCategoryClient issueCategoryId={params.issueCategoryId} />;
 }

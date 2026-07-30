@@ -1,5 +1,14 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
 
-export default function MyLogsPage() {
-  return <PageScaffold title="My Logs" description="Execution user's own logs with search, filters, status, module, grid/table switcher, and draft access placeholders." icon="logs" />;
+import { Suspense } from "react";
+
+import { MyLogsView } from "@/components/execution/logs/my-logs-view";
+import { MasterCardGridSkeleton } from "@/components/master/master-skeletons";
+
+export default function ExecutionMyLogsPage() {
+  return (
+    <Suspense fallback={<MasterCardGridSkeleton />}>
+      <MyLogsView viewMode="table" />
+    </Suspense>
+  );
 }

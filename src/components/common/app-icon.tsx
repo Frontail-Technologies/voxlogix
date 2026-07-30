@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Activity,
@@ -11,15 +11,19 @@ import {
   CaretLeft,
   CaretRight,
   ChartBar,
+  ChatCircle,
   CheckCircle,
   ClipboardText,
   CreditCard,
   Database,
   DotsThreeVertical,
+  DownloadSimple,
   Eye,
   EyeSlash,
+  Funnel,
   GearSix,
   Gauge,
+  ImageSquare,
   ListChecks,
   LockKey,
   MagnifyingGlass,
@@ -30,8 +34,12 @@ import {
   Plus,
   RocketLaunch,
   Sparkle,
+  SpeakerHigh,
   SquaresFour,
+  StopCircle,
   Sun,
+  Trash,
+  UploadSimple,
   UserCircle,
   UserGear,
   UsersThree,
@@ -50,12 +58,15 @@ export type AppIconName =
   | "caret-down"
   | "caret-left"
   | "caret-right"
+  | "chat"
   | "companies"
   | "dashboard"
   | "database"
+  | "download"
   | "eye"
   | "eye-off"
   | "equipment"
+  | "filter"
   | "logs"
   | "more"
   | "modules"
@@ -69,11 +80,17 @@ export type AppIconName =
   | "reports"
   | "rocket"
   | "search"
+  | "sign-out"
   | "sidebar"
   | "settings"
+  | "speaker"
   | "status"
+  | "stop"
   | "storage"
   | "sun"
+  | "image"
+  | "trash"
+  | "upload"
   | "users"
   | "voice"
   | "warning";
@@ -88,16 +105,20 @@ const iconMap = {
   "caret-down": CaretDown,
   "caret-left": CaretLeft,
   "caret-right": CaretRight,
+  chat: ChatCircle,
   companies: Buildings,
   dashboard: Gauge,
   database: Database,
+  download: DownloadSimple,
   eye: Eye,
   "eye-off": EyeSlash,
   equipment: Wrench,
+  filter: Funnel,
   logs: ClipboardText,
   more: DotsThreeVertical,
   modules: SquaresFour,
   notifications: Bell,
+  image: ImageSquare,
   package: Package,
   permissions: LockKey,
   planet: Planet,
@@ -107,11 +128,16 @@ const iconMap = {
   reports: ChartBar,
   rocket: RocketLaunch,
   search: MagnifyingGlass,
+  "sign-out": ArrowLeft,
   sidebar: ListDashes,
   settings: GearSix,
+  speaker: SpeakerHigh,
   status: CheckCircle,
+  stop: StopCircle,
   storage: ArchiveBox,
   sun: Sun,
+  trash: Trash,
+  upload: UploadSimple,
   users: UsersThree,
   voice: Microphone,
   warning: WarningCircle,
@@ -126,3 +152,5 @@ export function AppIcon({ name, weight = "duotone", ...props }: AppIconProps) {
 
   return <Icon aria-hidden="true" weight={weight} {...props} />;
 }
+
+

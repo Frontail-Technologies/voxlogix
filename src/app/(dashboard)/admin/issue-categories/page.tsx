@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { IssueCategoriesList } from "@/components/admin/master-data/issue-categories-list";
 
 export default function IssueCategoriesPage() {
-  return <PageScaffold title="Issue Categories" description="Issue category list for functions, sub-functions, applicable categories, failure modes, and spare references." icon="modules" />;
+  return <IssueCategoriesList />;
 }

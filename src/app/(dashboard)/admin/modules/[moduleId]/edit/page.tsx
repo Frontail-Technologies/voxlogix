@@ -1,5 +1,15 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function EditCompanyModulePage() {
-  return <PageScaffold title="Edit Company Module" description="Placeholder module customization for name, color, icon, required fields, and status." icon="modules" />;
+  const params = useParams<{ moduleId: string }>();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(`/admin/modules/${params.moduleId}`);
+  }, [params.moduleId, router]);
+
+  return null;
 }

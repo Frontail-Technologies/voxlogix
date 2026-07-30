@@ -1,6 +1,15 @@
 "use client";
 
-import { Fragment } from "react";
+import {
+  Fragment,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,7 +30,7 @@ const segmentLabels: Record<string, string> = {
   admins: "Admins",
   "ai-review": "AI Review",
   companies: "Companies",
-  "create-log": "Create Log",
+  "logs/create": "Create Log",
   dashboard: "Dashboard",
   details: "Details",
   "edit-draft": "Edit Draft",
@@ -32,6 +41,7 @@ const segmentLabels: Record<string, string> = {
   "issue-categories": "Issue Categories",
   locations: "Locations",
   logs: "Logs",
+  manuals: "Manuals",
   media: "Media",
   modules: "Modules",
   new: "New",
@@ -39,6 +49,8 @@ const segmentLabels: Record<string, string> = {
   profile: "Profile",
   remarks: "Remarks",
   reports: "Reports",
+  "ai-usage": "AI Usage",
+  "company-access": "Company Access",
   schema: "Schema",
   settings: "Settings",
   status: "Status",
@@ -46,12 +58,64 @@ const segmentLabels: Record<string, string> = {
   usage: "AI Usage",
 };
 
+type BreadcrumbLabelContextValue = {
+  labels: Record<string, string>;
+  registerLabel: (key: string, label: string) => () => void;
+};
+
+const BreadcrumbLabelContext = createContext<BreadcrumbLabelContextValue | null>(null);
+
+export function DynamicBreadcrumbProvider({ children }: { children: ReactNode }) {
+  const [labels, setLabels] = useState<Record<string, string>>({});
+
+  const registerLabel = useCallback((key: string, label: string) => {
+    if (!key || !label) {
+      return () => undefined;
+    }
+
+    setLabels((current) => ({ ...current, [key]: label }));
+
+    return () => {
+      setLabels((current) => {
+        if (current[key] !== label) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+    };
+  }, []);
+
+  const value = useMemo(() => ({ labels, registerLabel }), [labels, registerLabel]);
+
+  return (
+    <BreadcrumbLabelContext.Provider value={value}>
+      {children}
+    </BreadcrumbLabelContext.Provider>
+  );
+}
+
+export function useRegisterBreadcrumbLabel(key?: string | null, label?: string | null) {
+  const registerLabel = useContext(BreadcrumbLabelContext)?.registerLabel;
+
+  useEffect(() => {
+    if (!registerLabel || !key || !label) {
+      return undefined;
+    }
+
+    return registerLabel(key, label);
+  }, [registerLabel, key, label]);
+}
+
 function roleHome(role: UserRole) {
   return `/${role}/dashboard`;
 }
 
-function labelFromSegment(segment: string) {
+function labelFromSegment(segment: string, dynamicLabels: Record<string, string>) {
   return (
+    dynamicLabels[segment] ??
     segmentLabels[segment] ??
     segment
       .split("-")
@@ -61,7 +125,7 @@ function labelFromSegment(segment: string) {
   );
 }
 
-function buildBreadcrumbs(pathname: string) {
+function buildBreadcrumbs(pathname: string, dynamicLabels: Record<string, string>) {
   const role = roleFromPath(pathname);
   const navItems = ROLE_NAVIGATION[role];
   const segments = pathname.split("/").filter(Boolean);
@@ -71,18 +135,37 @@ function buildBreadcrumbs(pathname: string) {
 
   pageSegments.forEach((segment, index) => {
     const href = `/${[roleSegment, ...pageSegments.slice(0, index + 1)].join("/")}`;
+    const editOnlyEntityPath = `${roleSegment}/${pageSegments.slice(0, index).join("/")}`;
+
+    if (
+      pageSegments[index + 1] === "edit" &&
+      EDIT_ROUTES_WITHOUT_DETAIL_PAGE.has(editOnlyEntityPath)
+    ) {
+      return;
+    }
+
     const navItem = navItems.find((item) => item.href === href);
     const isNestedUsage =
       segment === "usage" && pageSegments[index - 1] === "companies";
 
     crumbs.push({
       href,
-      label: navItem?.title ?? (isNestedUsage ? "Usage" : labelFromSegment(segment)),
+      label:
+        navItem?.title ?? (isNestedUsage ? "Usage" : labelFromSegment(segment, dynamicLabels)),
     });
   });
 
   return crumbs;
 }
+
+// Edit routes for these entities have no sibling [id] detail page - back
+// should skip past the (non-existent) detail route straight to the list.
+const EDIT_ROUTES_WITHOUT_DETAIL_PAGE = new Set([
+  "admin/modules",
+  "admin/issue-categories",
+  "admin/locations",
+  "admin/equipment-categories",
+]);
 
 function parentHref(pathname: string) {
   const segments = pathname.split("/").filter(Boolean);
@@ -91,12 +174,20 @@ function parentHref(pathname: string) {
     return null;
   }
 
+  if (segments[segments.length - 1] === "edit" && segments.length >= 4) {
+    const entityPath = segments.slice(0, -2).join("/");
+    if (EDIT_ROUTES_WITHOUT_DETAIL_PAGE.has(entityPath)) {
+      return `/${segments.slice(0, -2).join("/")}`;
+    }
+  }
+
   return `/${segments.slice(0, -1).join("/")}`;
 }
 
 export function PageHeaderBreadcrumbs() {
   const pathname = usePathname();
-  const breadcrumbs = buildBreadcrumbs(pathname);
+  const context = useContext(BreadcrumbLabelContext);
+  const breadcrumbs = buildBreadcrumbs(pathname, context?.labels ?? {});
 
   if (breadcrumbs.length <= 2) {
     return null;

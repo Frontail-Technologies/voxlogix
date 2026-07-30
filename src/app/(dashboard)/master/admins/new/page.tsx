@@ -1,3 +1,5 @@
+"use client";
+
 import { DashboardPageHeader } from "@/components/common/dashboard-ui";
 import { AdminForm } from "@/components/master/admins/admin-form";
 

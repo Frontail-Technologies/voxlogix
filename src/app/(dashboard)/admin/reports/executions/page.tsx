@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+﻿"use client";
+
+import { ReportDetail } from "@/components/admin/reports/admin-reports";
 
 export default function ExecutionReportPage() {
-  return <PageScaffold title="Execution User Report" description="Logs by execution user, completed logs, pending logs, activity, and export placeholder." icon="reports" />;
+  return <ReportDetail type="users" />;
 }

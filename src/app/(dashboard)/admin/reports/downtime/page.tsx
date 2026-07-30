@@ -1,5 +1,7 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { ReportDetail } from "@/components/admin/reports/admin-reports";
 
 export default function DowntimeReportPage() {
-  return <PageScaffold title="Downtime Report" description="Total downtime by equipment, location, and date with export placeholder." icon="reports" />;
+  return <ReportDetail type="downtime" />;
 }

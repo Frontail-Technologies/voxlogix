@@ -1,5 +1,10 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { EditEquipmentClient } from "@/components/admin/equipment/edit-equipment-client";
 
 export default function EditEquipmentPage() {
-  return <PageScaffold title="Edit Equipment" description="Placeholder editor for equipment metadata, location, status, service dates, and notes." icon="equipment" />;
+  const params = useParams<{ equipmentId: string }>();
+  return <EditEquipmentClient equipmentId={params.equipmentId} />;
 }

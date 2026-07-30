@@ -1,5 +1,14 @@
-import { PageScaffold } from "@/components/common/page-scaffold";
+"use client";
+
+import { CreateLogFlow } from "@/components/logs/create-flow/create-log-flow";
 
 export default function ExecutionCreateLogPage() {
-  return <PageScaffold title="Create Voice Log" description="Placeholder flow for selecting a module, recording voice, transcript preview, and generating AI structured data." icon="voice" />;
+  return (
+    <CreateLogFlow
+      config={{
+        logsListHref: "/execution/my-logs",
+        logDetailHref: (logId) => `/execution/my-logs/${logId}`,
+      }}
+    />
+  );
 }
