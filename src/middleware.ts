@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const ACCESS_TOKEN_COOKIE_NAME = "voxlogix_access_token";
@@ -42,7 +42,7 @@ function protectedRoleFor(pathname: string) {
   return entry?.[1] ?? null;
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const requiredRole = protectedRoleFor(request.nextUrl.pathname);
   if (!requiredRole) return NextResponse.next();
 
