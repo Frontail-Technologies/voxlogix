@@ -26,7 +26,9 @@ export type EquipmentManualListItem = {
   mimeType: string | null;
   fileSize: number | null;
   status: string;
-  extractedText: string | null;
+  // The list endpoint is metadata-only (no PDF fetch/parse per row) and returns just the
+  // extracted-text length, not the text itself. Fetch a single manual's detail for full text.
+  extractedTextLength: number;
   createdAt: string;
   updatedAt: string;
   equipment: {
@@ -36,7 +38,8 @@ export type EquipmentManualListItem = {
   };
 };
 
-export type EquipmentManualDetail = EquipmentManualListItem & {
+export type EquipmentManualDetail = Omit<EquipmentManualListItem, "extractedTextLength"> & {
+  extractedText: string | null;
   chunks: Array<{
     id: string;
     pageNumber: number | null;

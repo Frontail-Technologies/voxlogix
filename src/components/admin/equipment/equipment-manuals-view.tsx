@@ -279,7 +279,7 @@ function UploadedManualsPanel({
 function ManualCard({ manual }: { manual: EquipmentManualListItem }) {
   const deleteMutation = useDeleteEquipmentManual();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const contextLength = manual.extractedText?.trim().length ?? 0;
+  const contextLength = manual.extractedTextLength;
 
   async function handleDelete() {
     try {

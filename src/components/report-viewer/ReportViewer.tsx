@@ -1,7 +1,10 @@
 ﻿'use client'
 
 import { useMemo, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, TriangleAlert } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { getApiErrorMessage } from '@/lib/api/error-toast'
 
 import { FilterPanel } from './FilterPanel'
 import { ViewerToolbar } from './ViewerToolbar'
@@ -95,6 +98,7 @@ export function ReportViewer({
 }: ReportViewerProps) {
   const [rows, setRows] = useState<ReportRow[] | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [page, setPage] = useState(1)
   const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({})
@@ -107,6 +111,7 @@ export function ReportViewer({
 
   async function handleGenerate(filterValues: Record<string, string | string[]>) {
     setLoading(true)
+    setError(null)
     setActiveFilters(filterValues)
     try {
       const data = await fetchData(filterValues)
@@ -114,8 +119,11 @@ export function ReportViewer({
       setRows(data)
     } catch (err) {
       console.error('ReportViewer: fetchData failed', err)
+      // Clear any previously-loaded rows so a failed regeneration can never be exported/printed
+      // as if it were the (stale) last successful report.
       setPage(1)
-      setRows([])
+      setRows(null)
+      setError(getApiErrorMessage(err, 'Could not generate this report. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -170,13 +178,23 @@ export function ReportViewer({
         </div>
       )}
 
-      {!loading && rows !== null && rows.length === 0 && (
+      {!loading && error && (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-16 text-center text-sm">
+          <TriangleAlert className="h-5 w-5 text-destructive" />
+          <p className="max-w-md text-destructive">{error}</p>
+          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {!loading && !error && rows !== null && rows.length === 0 && (
         <div className="flex items-center justify-center rounded-xl border bg-muted/20 py-16 text-sm text-muted-foreground">
           No records found for the selected filters.
         </div>
       )}
 
-      {!loading && rows !== null && rows.length > 0 && (
+      {!loading && !error && rows !== null && rows.length > 0 && (
         <div className="print:shadow-none">
           <div className="print:hidden">
             <ViewerToolbar

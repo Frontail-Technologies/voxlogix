@@ -10,8 +10,8 @@ import {
   CardTitle,
   DashboardCard,
 } from "@/components/common/dashboard-ui";
+import { ResponsiveSearchControl } from "@/components/common/responsive-search-control";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useEquipmentList } from "@/features/admin-equipment/api/equipment.queries";
 import type { EquipmentListItem } from "@/features/admin-equipment/api/equipment.types";
 import { cn } from "@/lib/utils";
@@ -30,19 +30,12 @@ export function SelectEquipmentStep({
   continueLabel = "Continue to Recording",
 }: SelectEquipmentStepProps) {
   const [search, setSearch] = useState("");
-  const { data, isLoading, isError } = useEquipmentList({ limit: 100 });
+  const isSearching = search.trim().length >= 2;
+  const { data, isLoading, isError } = useEquipmentList({
+    limit: 100,
+    search: isSearching ? search.trim() : undefined,
+  });
   const equipment = useMemo(() => data?.data ?? [], [data?.data]);
-  const filteredEquipment = useMemo(() => {
-    const normalized = search.trim().toLowerCase();
-
-    if (!normalized) return equipment;
-
-    return equipment.filter((item) =>
-      [item.name, item.equipmentCode, item.section, item.subLocation]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(normalized)),
-    );
-  }, [equipment, search]);
 
   return (
     <DashboardCard>
@@ -51,15 +44,12 @@ export function SelectEquipmentStep({
 
       </CardHeader>
       <CardContent className="space-y-3 px-4 pb-36 pt-4 sm:px-5">
-        <div className="relative">
-          <AppIcon name="search" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search EQP-111, pump, utility area..."
-            className="h-11 rounded-xl bg-secondary/70 pl-9"
-          />
-        </div>
+        <ResponsiveSearchControl
+          placeholder="Search EQP-111, pump, utility area..."
+          desktopClassName="w-full"
+          value={search}
+          onChange={setSearch}
+        />
 
         {isLoading ? <p className="text-sm text-muted-foreground">Loading equipment...</p> : null}
         {isError ? (
@@ -67,8 +57,8 @@ export function SelectEquipmentStep({
         ) : null}
         {!isLoading && !isError ? (
           <div className="grid gap-2 sm:grid-cols-2">
-            {filteredEquipment.length ? (
-              filteredEquipment.map((item) => {
+            {equipment.length ? (
+              equipment.map((item) => {
                 const isSelected = selected?.id === item.id;
 
                 return (
@@ -103,7 +93,7 @@ export function SelectEquipmentStep({
               })
             ) : (
               <p className="rounded-2xl border border-dashed border-border bg-secondary/40 p-5 text-sm text-muted-foreground">
-                No equipment matched your search.
+                {isSearching ? "No equipment matched your search." : "No equipment available yet."}
               </p>
             )}
           </div>

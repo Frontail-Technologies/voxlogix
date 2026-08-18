@@ -34,11 +34,16 @@ function decodeRole(token: string): string | null {
 
 function isExpired(token: string) {
   const payload = decodePayload(token);
-  return typeof payload?.exp === "number" && payload.exp <= Math.floor(Date.now() / 1000);
+  return (
+    typeof payload?.exp === "number" &&
+    payload.exp <= Math.floor(Date.now() / 1000)
+  );
 }
 
 function protectedRoleFor(pathname: string) {
-  const entry = Object.entries(ROLE_PREFIXES).find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const entry = Object.entries(ROLE_PREFIXES).find(
+    ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
   return entry?.[1] ?? null;
 }
 
@@ -48,18 +53,27 @@ export function middleware(request: NextRequest) {
 
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
-  const usableAccessToken = accessToken && !isExpired(accessToken) ? accessToken : null;
-  const usableRefreshToken = refreshToken && !isExpired(refreshToken) ? refreshToken : null;
+  const usableAccessToken =
+    accessToken && !isExpired(accessToken) ? accessToken : null;
+  const usableRefreshToken =
+    refreshToken && !isExpired(refreshToken) ? refreshToken : null;
   const tokenForRole = usableAccessToken ?? usableRefreshToken;
 
-  if (!tokenForRole) return NextResponse.redirect(new URL("/login", request.url));
+  if (!tokenForRole)
+    return NextResponse.redirect(new URL("/login", request.url));
 
   const role = decodeRole(tokenForRole);
-  if (role !== requiredRole) return NextResponse.redirect(new URL("/unauthorized", request.url));
+  if (role !== requiredRole)
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/master/:path*", "/planner/:path*", "/execution/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/master/:path*",
+    "/planner/:path*",
+    "/execution/:path*",
+  ],
 };
