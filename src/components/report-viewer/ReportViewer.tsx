@@ -1,10 +1,10 @@
-﻿'use client'
+'use client'
 
 import { useMemo, useState } from 'react'
 import { Loader2, TriangleAlert } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { getApiErrorMessage } from '@/lib/api/error-toast'
+import { getApiErrorMessage, showApiErrorToast } from '@/lib/api/error-toast'
 
 import { FilterPanel } from './FilterPanel'
 import { ViewerToolbar } from './ViewerToolbar'
@@ -14,6 +14,8 @@ import { exportExcel } from './exportExcel'
 import { ReportViewerProps, ReportRow } from './types'
 
 const PAGE_SIZE = 20
+
+type ReportRequestStatus = 'idle' | 'loading' | 'success' | 'error'
 
 function slugifyFilename(value: string) {
   return value
@@ -96,42 +98,44 @@ export function ReportViewer({
   totals = [],
   filename,
 }: ReportViewerProps) {
-  const [rows, setRows] = useState<ReportRow[] | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [rows, setRows] = useState<ReportRow[]>([])
+  const [requestStatus, setRequestStatus] = useState<ReportRequestStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [page, setPage] = useState(1)
   const [activeFilters, setActiveFilters] = useState<Record<string, string | string[]>>({})
 
-  const totalPages = Math.max(1, Math.ceil((rows?.length ?? 0) / PAGE_SIZE))
-  const pageRows = useMemo(() => {
-    if (!rows) return []
-    return rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-  }, [page, rows])
+  const loading = requestStatus === 'loading'
+  const latestRequestFailed = requestStatus === 'error'
+  const hasSuccessfulRows = requestStatus === 'success' && rows.length > 0
+  const hasSuccessfulEmptyResult = requestStatus === 'success' && rows.length === 0
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
+  const pageRows = useMemo(() => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [page, rows])
 
   async function handleGenerate(filterValues: Record<string, string | string[]>) {
-    setLoading(true)
+    setRequestStatus('loading')
     setError(null)
+    setRows([])
     setActiveFilters(filterValues)
+
     try {
       const data = await fetchData(filterValues)
       setPage(1)
       setRows(data)
+      setRequestStatus('success')
     } catch (err) {
       console.error('ReportViewer: fetchData failed', err)
-      // Clear any previously-loaded rows so a failed regeneration can never be exported/printed
-      // as if it were the (stale) last successful report.
       setPage(1)
-      setRows(null)
+      setRows([])
       setError(getApiErrorMessage(err, 'Could not generate this report. Please try again.'))
-    } finally {
-      setLoading(false)
+      setRequestStatus('error')
+      showApiErrorToast(err, 'Could not generate this report')
     }
   }
 
   function handleRefresh() {
     if (Object.keys(activeFilters).length > 0) {
-      handleGenerate(activeFilters)
+      void handleGenerate(activeFilters)
     }
   }
 
@@ -178,23 +182,26 @@ export function ReportViewer({
         </div>
       )}
 
-      {!loading && error && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-16 text-center text-sm">
+      {!loading && latestRequestFailed && (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-16 text-center text-sm">
           <TriangleAlert className="h-5 w-5 text-destructive" />
-          <p className="max-w-md text-destructive">{error}</p>
+          <div className="space-y-1">
+            <p className="font-medium text-destructive">Could not generate report.</p>
+            <p className="max-w-md whitespace-pre-line text-muted-foreground">{error}</p>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
             Retry
           </Button>
         </div>
       )}
 
-      {!loading && !error && rows !== null && rows.length === 0 && (
+      {!loading && hasSuccessfulEmptyResult && (
         <div className="flex items-center justify-center rounded-xl border bg-muted/20 py-16 text-sm text-muted-foreground">
           No records found for the selected filters.
         </div>
       )}
 
-      {!loading && !error && rows !== null && rows.length > 0 && (
+      {!loading && hasSuccessfulRows && (
         <div className="print:shadow-none">
           <div className="print:hidden">
             <ViewerToolbar
@@ -204,13 +211,18 @@ export function ReportViewer({
               currentPage={page}
               totalPages={totalPages}
               onPageChange={setPage}
-              onExportPDF={async () =>
+              onExportPDF={async () => {
+                if (latestRequestFailed || rows.length === 0) return
                 await exportPDF({ title, columns, rows, totals, company, filename: reportFilename })
-              }
-              onExportExcel={() =>
+              }}
+              onExportExcel={() => {
+                if (latestRequestFailed || rows.length === 0) return
                 exportExcel({ title, columns, rows, totals, company, filename: reportFilename })
-              }
-              onPrint={() => printReportElement(reportFilename)}
+              }}
+              onPrint={() => {
+                if (latestRequestFailed || rows.length === 0) return
+                printReportElement(reportFilename)
+              }}
             />
           </div>
           <div className="overflow-x-auto rounded-b-xl border-x border-b print:overflow-visible print:border-none">
@@ -230,6 +242,3 @@ export function ReportViewer({
     </div>
   )
 }
-
-
-

@@ -41,7 +41,9 @@ const toneClasses: Record<DashboardTone, string> = {
 
 export function DashboardPageHeader({
   title,
+  description,
   action,
+  hideDescriptionOnMobile,
 }: {
   title: string;
   description?: string;
@@ -49,10 +51,10 @@ export function DashboardPageHeader({
   hideDescriptionOnMobile?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1">
         <PageHeaderBreadcrumbs />
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <PageTitleBackButton />
@@ -60,15 +62,25 @@ export function DashboardPageHeader({
                 {title}
               </h1>
             </div>
+            {description ? (
+              <p
+                className={cn(
+                  "mt-1 max-w-2xl text-sm leading-5 text-muted-foreground",
+                  hideDescriptionOnMobile && "hidden sm:block",
+                )}
+              >
+                {description}
+              </p>
+            ) : null}
           </div>
           {action ? (
-            <div className="shrink-0 self-center [&>a]:size-9 [&>a]:gap-0 [&>a]:rounded-xl [&>a]:px-0 [&>a]:text-[0px] [&>button]:size-9 [&>button]:gap-0 [&>button]:rounded-xl [&>button]:px-0 [&>button]:text-[0px] [&_svg]:size-4 sm:hidden">
+            <div className="shrink-0 self-start [&>a]:size-9 [&>a]:gap-0 [&>a]:rounded-xl [&>a]:px-0 [&>a]:text-[0px] [&>button]:size-9 [&>button]:gap-0 [&>button]:rounded-xl [&>button]:px-0 [&>button]:text-[0px] [&_svg]:size-4 sm:hidden">
               {action}
             </div>
           ) : null}
         </div>
       </div>
-      {action ? <div className="hidden sm:block">{action}</div> : null}
+      {action ? <div className="hidden pt-5 sm:block">{action}</div> : null}
     </div>
   );
 }
@@ -239,3 +251,4 @@ export {
   CardTitle,
   CardContent,
 };
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CriticalityBadge } from "@/components/admin/equipment/equipment-badges";
 import { AppIcon } from "@/components/common/app-icon";
@@ -16,12 +16,26 @@ import { useEquipmentList } from "@/features/admin-equipment/api/equipment.queri
 import type { EquipmentListItem } from "@/features/admin-equipment/api/equipment.types";
 import { cn } from "@/lib/utils";
 
+const EQUIPMENT_RESULT_LIMIT = 30;
+const SEARCH_DEBOUNCE_MS = 300;
+
 type SelectEquipmentStepProps = {
   selected: EquipmentListItem | null;
   onSelect: (item: EquipmentListItem) => void;
   onContinue: () => void;
   continueLabel?: string;
 };
+
+function useDebouncedValue(value: string, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => window.clearTimeout(timeout);
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
 
 export function SelectEquipmentStep({
   selected,
@@ -30,10 +44,13 @@ export function SelectEquipmentStep({
   continueLabel = "Continue to Recording",
 }: SelectEquipmentStepProps) {
   const [search, setSearch] = useState("");
-  const isSearching = search.trim().length >= 2;
-  const { data, isLoading, isError } = useEquipmentList({
-    limit: 100,
-    search: isSearching ? search.trim() : undefined,
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
+  const searchTerm = debouncedSearch.trim();
+  const isSearching = searchTerm.length >= 2;
+  const { data, isLoading, isFetching, isError } = useEquipmentList({
+    page: 1,
+    limit: EQUIPMENT_RESULT_LIMIT,
+    search: isSearching ? searchTerm : undefined,
   });
   const equipment = useMemo(() => data?.data ?? [], [data?.data]);
 
@@ -41,7 +58,6 @@ export function SelectEquipmentStep({
     <DashboardCard>
       <CardHeader className="border-b border-border/70 px-4 py-3 sm:px-5">
         <CardTitle>Identify Equipment</CardTitle>
-
       </CardHeader>
       <CardContent className="space-y-3 px-4 pb-36 pt-4 sm:px-5">
         <ResponsiveSearchControl
@@ -51,6 +67,9 @@ export function SelectEquipmentStep({
           onChange={setSearch}
         />
 
+        {isFetching && !isLoading ? (
+          <p className="text-xs text-muted-foreground">Updating equipment results...</p>
+        ) : null}
         {isLoading ? <p className="text-sm text-muted-foreground">Loading equipment...</p> : null}
         {isError ? (
           <p className="text-sm text-muted-foreground">Could not load equipment.</p>

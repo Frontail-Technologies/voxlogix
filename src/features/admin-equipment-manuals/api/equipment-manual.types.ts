@@ -40,13 +40,6 @@ export type EquipmentManualListItem = {
 
 export type EquipmentManualDetail = Omit<EquipmentManualListItem, "extractedTextLength"> & {
   extractedText: string | null;
-  chunks: Array<{
-    id: string;
-    pageNumber: number | null;
-    sectionTitle: string | null;
-    chunkText: string;
-    sortOrder: number;
-  }>;
 };
 
 export type { PaginationMeta };
