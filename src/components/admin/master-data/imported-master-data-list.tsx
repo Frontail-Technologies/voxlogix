@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { QrCode } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { AppIcon, type AppIconName } from "@/components/common/app-icon";
 import {
@@ -19,6 +20,7 @@ import { ResponsiveSearchControl } from "@/components/common/responsive-search-c
 import { TablePagination } from "@/components/common/table-pagination";
 import { MasterTableSkeleton } from "@/components/master/master-skeletons";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useImportedMasterData } from "@/features/imported-master-data/api/imported-master-data.queries";
 import type {
   ImportedMasterDataItem,
@@ -26,6 +28,7 @@ import type {
   PaginationMeta,
 } from "@/features/imported-master-data/api/imported-master-data.types";
 import { formatMasterDataDate, masterDataLabel, masterDataStatuses } from "@/features/admin-master-data/master-data.presentation";
+import { QrLabelDialog } from "@/components/admin/master-data/qr-label-dialog";
 
 const sourceConfigs: Record<
   ImportedMasterDataSource,
@@ -111,7 +114,9 @@ export function ImportedMasterDataList({ source }: { source: ImportedMasterDataS
   });
   const rows = data?.data ?? [];
   const meta = data?.meta;
-  const columnCount = config.columns.length + 2;
+  const hasQrAction = source === "measuringPoints" || source === "meterCounters";
+  const [qrItem, setQrItem] = useState<ImportedMasterDataItem | null>(null);
+  const columnCount = config.columns.length + (hasQrAction ? 3 : 2);
 
   const subtitle = useMemo(() => {
     if (!meta) return config.description;
@@ -156,9 +161,38 @@ export function ImportedMasterDataList({ source }: { source: ImportedMasterDataS
         <DashboardCard>
           {isLoading ? <MasterTableSkeleton columns={columnCount} /> : null}
           {isError ? <p className="p-5 text-sm text-muted-foreground">Could not load {config.title.toLowerCase()}.</p> : null}
-          {!isLoading && !isError ? <ImportedDataTable rows={rows} config={config} columnCount={columnCount} /> : null}
+          {!isLoading && !isError ? (
+            <ImportedDataTable
+              rows={rows}
+              config={config}
+              columnCount={columnCount}
+              hasQrAction={hasQrAction}
+              onQr={setQrItem}
+            />
+          ) : null}
         </DashboardCard>
       </div>
+      {qrItem && "pointCode" in qrItem ? (
+        <QrLabelDialog
+          open={Boolean(qrItem)}
+          onOpenChange={(open) => !open && setQrItem(null)}
+          type="measuring-point"
+          code={qrItem.pointCode}
+          title={qrItem.measurementName}
+          subtitle={qrItem.equipmentCodeSnapshot}
+        />
+      ) : null}
+      {qrItem && "counterCode" in qrItem ? (
+        <QrLabelDialog
+          open={Boolean(qrItem)}
+          onOpenChange={(open) => !open && setQrItem(null)}
+          type="meter-counter"
+          code={qrItem.counterCode}
+          title={qrItem.counterName}
+          subtitle={qrItem.equipmentCodeSnapshot}
+          locationLabel={qrItem.location}
+        />
+      ) : null}
     </div>
   );
 }
@@ -184,10 +218,14 @@ function ImportedDataTable({
   rows,
   config,
   columnCount,
+  hasQrAction,
+  onQr,
 }: {
   rows: ImportedMasterDataItem[];
   config: (typeof sourceConfigs)[ImportedMasterDataSource];
   columnCount: number;
+  hasQrAction: boolean;
+  onQr: (item: ImportedMasterDataItem) => void;
 }) {
   return (
     <Table className="[&_td]:py-3">
@@ -198,10 +236,19 @@ function ImportedDataTable({
             <TableHead key={column.label}>{column.label}</TableHead>
           ))}
           <TableHead>Updated</TableHead>
+          {hasQrAction ? <TableHead className="text-right">Actions</TableHead> : null}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.length ? rows.map((item) => <ImportedDataRow key={item.id} item={item} config={config} />) : (
+        {rows.length ? rows.map((item) => (
+          <ImportedDataRow
+            key={item.id}
+            item={item}
+            config={config}
+            hasQrAction={hasQrAction}
+            onQr={onQr}
+          />
+        )) : (
           <TableRow>
             <TableCell colSpan={columnCount} className="py-8 text-center text-muted-foreground">{config.emptyText}</TableCell>
           </TableRow>
@@ -211,7 +258,17 @@ function ImportedDataTable({
   );
 }
 
-function ImportedDataRow({ item, config }: { item: ImportedMasterDataItem; config: (typeof sourceConfigs)[ImportedMasterDataSource] }) {
+function ImportedDataRow({
+  item,
+  config,
+  hasQrAction,
+  onQr,
+}: {
+  item: ImportedMasterDataItem;
+  config: (typeof sourceConfigs)[ImportedMasterDataSource];
+  hasQrAction: boolean;
+  onQr: (item: ImportedMasterDataItem) => void;
+}) {
   const title = "incidentCategory" in item ? item.incidentCategory : "measurementName" in item ? item.measurementName : "counterName" in item ? item.counterName : "category" in item ? item.category : "Imported record";
   return (
     <TableRow>
@@ -237,6 +294,14 @@ function ImportedDataRow({ item, config }: { item: ImportedMasterDataItem; confi
           <span>{formatMasterDataDate(item.updatedAt)}</span>
         </div>
       </TableCell>
+      {hasQrAction ? (
+        <TableCell className="text-right">
+          <Button variant="outline" size="sm" onClick={() => onQr(item)}>
+            <QrCode className="size-3.5" />
+            QR
+          </Button>
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }
