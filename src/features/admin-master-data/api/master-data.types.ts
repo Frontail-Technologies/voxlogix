@@ -81,6 +81,9 @@ export type EquipmentCategoryListParams = {
 export type MasterDataImportSheetSummary = {
   sheet: string;
   imported: number;
+  created: number;
+  updated: number;
+  unchanged: number;
   skipped: number;
   errors: string[];
 };

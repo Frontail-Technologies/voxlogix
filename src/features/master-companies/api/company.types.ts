@@ -55,6 +55,7 @@ export type CompanyAccess = {
   voiceLoggingEnabled: boolean;
   aiStructuredExtractionEnabled: boolean;
   imageUploadEnabled: boolean;
+  captureDeviceLocationEnabled: boolean;
   enabledModuleIds: string[];
   enabledModules: CompanyDetail["enabledModules"];
   reportsEnabled: boolean;

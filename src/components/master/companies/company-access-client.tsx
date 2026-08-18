@@ -19,6 +19,7 @@ type AccessFlags = {
   voiceLoggingEnabled: boolean;
   aiStructuredExtractionEnabled: boolean;
   imageUploadEnabled: boolean;
+  captureDeviceLocationEnabled: boolean;
   reportsEnabled: boolean;
   exportEnabled: boolean;
 };
@@ -27,6 +28,7 @@ const accessFlagLabels: Array<{ key: keyof AccessFlags; label: string }> = [
   { key: "voiceLoggingEnabled", label: "Voice Logging" },
   { key: "aiStructuredExtractionEnabled", label: "AI Extraction" },
   { key: "imageUploadEnabled", label: "Image Upload" },
+  { key: "captureDeviceLocationEnabled", label: "Device Location" },
   { key: "reportsEnabled", label: "Reports" },
   { key: "exportEnabled", label: "Export" },
 ];
@@ -44,6 +46,7 @@ export function CompanyAccessClient({ companyId }: { companyId: string }) {
     voiceLoggingEnabled: access?.voiceLoggingEnabled ?? false,
     aiStructuredExtractionEnabled: access?.aiStructuredExtractionEnabled ?? false,
     imageUploadEnabled: access?.imageUploadEnabled ?? false,
+    captureDeviceLocationEnabled: access?.captureDeviceLocationEnabled ?? false,
     reportsEnabled: access?.reportsEnabled ?? false,
     exportEnabled: access?.exportEnabled ?? false,
   };

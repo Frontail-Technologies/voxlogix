@@ -194,10 +194,13 @@ export function MasterDataImportWizard() {
     return result.sheets.reduce(
       (current, sheet) => ({
         imported: current.imported + sheet.imported,
+        created: current.created + (sheet.created ?? 0),
+        updated: current.updated + (sheet.updated ?? 0),
+        unchanged: current.unchanged + (sheet.unchanged ?? 0),
         skipped: current.skipped + sheet.skipped,
         errors: current.errors + sheet.errors.length,
       }),
-      { imported: 0, skipped: 0, errors: 0 },
+      { imported: 0, created: 0, updated: 0, unchanged: 0, skipped: 0, errors: 0 },
     );
   }, [result]);
 
@@ -432,6 +435,8 @@ export function MasterDataImportWizard() {
               {totals ? (
                 <div className="flex flex-wrap gap-2 text-xs">
                   <StatusBadge status={`${totals.imported} imported`} />
+                  <StatusBadge status={`${totals.created} created`} />
+                  <StatusBadge status={`${totals.updated} updated`} />
                   <StatusBadge status={`${totals.skipped} skipped`} />
                   {totals.errors ? <StatusBadge status={`${totals.errors} errors`} /> : null}
                 </div>
@@ -446,6 +451,12 @@ export function MasterDataImportWizard() {
                   <div className="flex flex-wrap gap-2 text-xs">
                     <span className="rounded-md bg-emerald-500/12 px-2 py-1 text-emerald-700 dark:text-emerald-300">
                       {sheet.imported} imported
+                    </span>
+                    <span className="rounded-md bg-blue-500/12 px-2 py-1 text-blue-700 dark:text-blue-300">
+                      {(sheet.created ?? 0)} created
+                    </span>
+                    <span className="rounded-md bg-amber-500/12 px-2 py-1 text-amber-700 dark:text-amber-300">
+                      {(sheet.updated ?? 0)} updated
                     </span>
                     <span className="rounded-md bg-muted px-2 py-1 text-muted-foreground">
                       {sheet.skipped} skipped
