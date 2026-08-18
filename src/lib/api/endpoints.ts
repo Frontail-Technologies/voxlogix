@@ -64,6 +64,11 @@ export const apiEndpoints = {
     attachmentById: (logId: string, attachmentId: string) =>
       `/logs/${logId}/attachments/${attachmentId}`,
   },
+  reports: {
+    kpiDashboard: "/reports/kpi-dashboard",
+    outputSummary: "/reports/output/summary",
+    outputExport: "/reports/output/export",
+  },
   locations: {
     root: "/locations",
     byId: (locationId: string) => `/locations/${locationId}`,

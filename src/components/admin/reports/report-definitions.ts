@@ -334,9 +334,23 @@ export const adminReportDefinitions: Record<AdminReportType, AdminReportDefiniti
   },
 };
 
-export const reportCards = Object.values(adminReportDefinitions).map((report) => ({
-  title: report.title,
-  description: report.description,
-  href: report.href,
-  icon: report.icon,
-}));
+export const reportCards = [
+  {
+    title: "KPI Dashboard",
+    description: "View client-defined operational KPIs for maintenance, safety, measurement, counters, and kaizen.",
+    href: "/admin/reports/kpi-dashboard",
+    icon: "activity" as AppIconName,
+  },
+  {
+    title: "VoxLogiX Output Report",
+    description: "Download the official module-wise Excel workbook for a selected date range.",
+    href: "/admin/reports/output",
+    icon: "reports" as AppIconName,
+  },
+  ...Object.values(adminReportDefinitions).map((report) => ({
+    title: report.title,
+    description: report.description,
+    href: report.href,
+    icon: report.icon,
+  })),
+];

@@ -156,3 +156,62 @@ export async function apiRequest<TData, TMeta = Record<string, unknown>>(
     window.clearTimeout(timeoutId);
   }
 }
+
+export async function apiDownloadBlob(
+  path: string,
+  options: RequestOptions = {},
+) {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
+  const timeoutController = new AbortController();
+  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+
+  if (signal) {
+    signal.addEventListener("abort", () => timeoutController.abort(), { once: true });
+  }
+
+  try {
+    const requestInit = buildRequestInit(options, timeoutController.signal);
+    let response = await fetch(`${apiEndpoints.baseUrl}${path}`, requestInit);
+
+    if (response.status === 401 && canRefreshSession(path)) {
+      const refreshed = await refreshSession();
+
+      if (refreshed) {
+        response = await fetch(`${apiEndpoints.baseUrl}${path}`, requestInit);
+      } else {
+        redirectToLogin();
+      }
+    }
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as ApiErrorResponse | null;
+      throw new ApiClientError(payload?.message || "Download failed", {
+        status: response.status,
+        errorCode: payload?.errorCode,
+        errors: payload?.errors ?? [],
+      });
+    }
+
+    const disposition = response.headers.get("content-disposition") ?? "";
+    const filenameMatch = /filename="?([^"]+)"?/i.exec(disposition);
+    return {
+      blob: await response.blob(),
+      filename: filenameMatch?.[1] ?? "VoxLogiX_Output_Report.xlsx",
+    };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiClientError("The request timed out. Please try again.", {
+        status: 0,
+        errorCode: "TIMEOUT",
+      });
+    }
+
+    if (error instanceof ApiClientError && error.status === 401 && canRefreshSession(path)) {
+      redirectToLogin();
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}

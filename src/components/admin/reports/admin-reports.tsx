@@ -18,7 +18,8 @@ export function ReportsOverview() {
     <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
         title="Reports"
-        description="Generate focused operational reports with filters, print, PDF, and Excel export."
+        description="Generate focused operational reports and Excel exports."
+        hideDescriptionOnMobile
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
