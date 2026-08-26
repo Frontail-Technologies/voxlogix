@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { AssetUploadPanel } from "@/components/common/asset-upload-panel";
+import { FormField as Field } from "@/components/common/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -36,7 +36,17 @@ import type { ImageAssetValue } from "@/features/uploads/api/upload.types";
 import { isPendingImageAsset } from "@/features/uploads/api/upload.types";
 import { showApiErrorToast } from "@/lib/api/error-toast";
 import { buildMultipartPayload } from "@/lib/api/multipart";
-import { cn } from "@/lib/utils";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  isFormDirty,
+  readFormValues,
+  validateRequiredFields,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 
 type UserFormSheetMode = "create" | "edit" | "view";
 
@@ -66,6 +76,7 @@ export function UserFormSheet({
   const updateMutation = useUpdateAdminUser(user?.id ?? "");
   const [requirePasswordReset, setRequirePasswordReset] = useState(true);
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [avatarAsset, setAvatarAsset] = useState<ImageAssetValue | null>(() =>
     user?.avatarUrl
       ? {
@@ -79,13 +90,76 @@ export function UserFormSheet({
       : null,
   );
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const initialValues = useMemo<FormValues>(() => ({
+    fullName: user?.fullName ?? "",
+    username: user?.username ?? "",
+    email: user?.email ?? "",
+    phone: user?.phone ?? "",
+    role: normalizeAdminUserValue(user?.role) || "PLANNER",
+    status: normalizeAdminUserValue(user?.status) || "ACTIVE",
+    requirePasswordReset: "true",
+    sendWelcomeEmail: "true",
+    avatarKey: user?.avatarKey ?? user?.avatarUrl ?? "",
+  }), [user?.avatarKey, user?.avatarUrl, user?.email, user?.fullName, user?.phone, user?.role, user?.status, user?.username]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const isDirty = mode !== "edit" || isFormDirty(initialValues, currentValues);
+  const password = String(currentValues.temporaryPassword ?? "");
+  const confirmPassword = String(currentValues.confirmPassword ?? "");
+  const isCreateReady = mode !== "create" || (
+    Boolean(currentValues.fullName)
+    && Boolean(currentValues.username)
+    && Boolean(currentValues.email)
+    && Boolean(currentValues.phone)
+    && password.length >= 8
+    && password === confirmPassword
+  );
+  const submitDisabled = readOnly || !isDirty || !isCreateReady || hasFieldErrors(errors);
+
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget, {
+      requirePasswordReset: String(requirePasswordReset),
+      sendWelcomeEmail: String(sendWelcomeEmail),
+      avatarKey: avatarAssetKey(avatarAsset, user),
+    }));
+  }
+
+  function updateToggle(key: "requirePasswordReset" | "sendWelcomeEmail", checked: boolean) {
+    if (key === "requirePasswordReset") setRequirePasswordReset(checked);
+    if (key === "sendWelcomeEmail") setSendWelcomeEmail(checked);
+    setCurrentValues((current) => ({ ...current, [key]: String(checked) }));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
 
     if (readOnly) return;
 
     const formData = new FormData(event.currentTarget);
+    const formValues = readFormValues(event.currentTarget);
+    const nextErrors = validateRequiredFields(formValues, [
+      { key: "fullName", label: "Full name" },
+      { key: "username", label: "Username" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+      ...mode === "create" ? [
+        { key: "temporaryPassword", label: "Temporary password" },
+        { key: "confirmPassword", label: "Confirm password" },
+      ] : [],
+    ]);
+    const email = stringValue(formData, "email");
+    const temporaryPassword = stringValue(formData, "temporaryPassword");
+    const confirmPasswordValue = stringValue(formData, "confirmPassword");
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Enter a valid email address.";
+    if (mode === "create" && temporaryPassword && temporaryPassword.length < 8) nextErrors.temporaryPassword = "Temporary password must be at least 8 characters.";
+    if (mode === "create" && temporaryPassword !== confirmPasswordValue) nextErrors.confirmPassword = "Passwords do not match.";
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
     const fullName = stringValue(formData, "fullName");
     const payload = {
       fullName,
@@ -113,6 +187,11 @@ export function UserFormSheet({
       } else if (user) {
         await updateMutation.mutateAsync(buildMultipartPayload(payload, avatarFile));
         toast.success(`${fullName} updated`);
+        setCurrentValues(readFormValues(event.currentTarget, {
+          requirePasswordReset: String(requirePasswordReset),
+          sendWelcomeEmail: String(sendWelcomeEmail),
+          avatarKey: avatarAssetKey(avatarAsset, user),
+        }));
       }
       onOpenChange(false);
     } catch (error) {
@@ -127,7 +206,7 @@ export function UserFormSheet({
           <SheetTitle>{modeTitles[mode]}</SheetTitle>
         </SheetHeader>
 
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
           <div className="flex-1 space-y-5 overflow-y-auto px-4 pb-4">
             {!readOnly ? (
               <AssetUploadPanel
@@ -139,34 +218,37 @@ export function UserFormSheet({
                 fileName={user?.fullName ?? "user-avatar"}
                 initials={user?.initials ?? "US"}
                 value={avatarAsset}
-                onChange={setAvatarAsset}
+                onChange={(asset) => {
+                  setAvatarAsset(asset);
+                  setCurrentValues((current) => ({ ...current, avatarKey: avatarAssetKey(asset, user) }));
+                }}
               />
             ) : null}
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full Name">
+              <Field label="Full Name" fieldName="fullName" error={errors.fullName}>
                 <Input
                   name="fullName"
                   defaultValue={user?.fullName}
                   placeholder="Enter full name"
                   disabled={readOnly}
                   className="h-11 rounded-xl bg-secondary/70"
-                  required
+                  aria-invalid={Boolean(errors.fullName)}
                 />
               </Field>
 
-              <Field label="Username">
+              <Field label="Username" fieldName="username" error={errors.username}>
                 <Input
                   name="username"
                   defaultValue={user?.username}
                   placeholder="username"
                   disabled={readOnly}
                   className="h-11 rounded-xl bg-secondary/70"
-                  required
+                  aria-invalid={Boolean(errors.username)}
                 />
               </Field>
 
-              <Field label="Email">
+              <Field label="Email" fieldName="email" error={errors.email}>
                 <Input
                   name="email"
                   defaultValue={user?.email}
@@ -174,18 +256,18 @@ export function UserFormSheet({
                   placeholder="name@company.com"
                   disabled={readOnly}
                   className="h-11 rounded-xl bg-secondary/70"
-                  required
+                  aria-invalid={Boolean(errors.email)}
                 />
               </Field>
 
-              <Field label="Phone">
+              <Field label="Phone" fieldName="phone" error={errors.phone}>
                 <Input
                   name="phone"
                   defaultValue={user?.phone}
                   placeholder="+91 98765 43210"
                   disabled={readOnly}
                   className="h-11 rounded-xl bg-secondary/70"
-                  required
+                  aria-invalid={Boolean(errors.phone)}
                 />
               </Field>
 
@@ -237,22 +319,22 @@ export function UserFormSheet({
 
             {mode === "create" ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Temporary Password">
+                <Field label="Temporary Password" fieldName="temporaryPassword" error={errors.temporaryPassword}>
                   <Input
                     name="temporaryPassword"
                     type="password"
                     defaultValue="Vox@12345"
                     className="h-11 rounded-xl bg-secondary/70"
-                    required
+                    aria-invalid={Boolean(errors.temporaryPassword)}
                   />
                 </Field>
-                <Field label="Confirm Password">
+                <Field label="Confirm Password" fieldName="confirmPassword" error={errors.confirmPassword}>
                   <Input
                     name="confirmPassword"
                     type="password"
                     defaultValue="Vox@12345"
                     className="h-11 rounded-xl bg-secondary/70"
-                    required
+                    aria-invalid={Boolean(errors.confirmPassword)}
                   />
                 </Field>
               </div>
@@ -264,13 +346,13 @@ export function UserFormSheet({
                   title="Require password reset"
                   description="User must set a new password after signing in."
                   checked={requirePasswordReset}
-                  onCheckedChange={setRequirePasswordReset}
+                  onCheckedChange={(checked) => updateToggle("requirePasswordReset", checked)}
                 />
                 <ToggleRow
                   title="Send welcome email"
                   description="Send account instructions to the user email."
                   checked={sendWelcomeEmail}
-                  onCheckedChange={setSendWelcomeEmail}
+                  onCheckedChange={(checked) => updateToggle("sendWelcomeEmail", checked)}
                 />
               </div>
             ) : null}
@@ -299,7 +381,7 @@ export function UserFormSheet({
                 <Button
                   type="submit"
                   className="flex-1 rounded-xl"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || submitDisabled}
                 >
                   {isSubmitting
                     ? "Saving..."
@@ -313,23 +395,6 @@ export function UserFormSheet({
         </form>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("space-y-2", className)}>
-      <Label>{label}</Label>
-      {children}
-    </div>
   );
 }
 
@@ -368,3 +433,8 @@ function stringValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function avatarAssetKey(asset: ImageAssetValue | null, user?: AdminListItem) {
+  return isPendingImageAsset(asset)
+    ? user?.avatarKey ?? user?.avatarUrl ?? ""
+    : asset?.key ?? asset?.secureUrl ?? asset?.url ?? "";
+}

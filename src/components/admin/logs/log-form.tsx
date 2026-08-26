@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode, useMemo } from "react";
+import { type ChangeEvent, type FormEvent, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { CardContent, DashboardCard } from "@/components/common/dashboard-ui";
 import { FormActionBar } from "@/components/common/form-action-bar";
+import { FormField as Field } from "@/components/common/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,7 +23,17 @@ import type { AdminLogPayload } from "@/features/logs/api/log.types";
 import { logLabel, logModules, optionValueOrFallback } from "@/features/logs/log.presentation";
 import type { ModuleField } from "@/features/master-modules/api/module.types";
 import { showApiErrorToast } from "@/lib/api/error-toast";
-import { cn } from "@/lib/utils";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  isFormDirty,
+  readFormValues,
+  validateRequiredFields,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 
 export type LogFormValues = {
   moduleId?: string | null;
@@ -59,6 +69,8 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
   const isEdit = mode === "edit";
   const createMutation = useCreateLog();
   const updateMutation = useUpdateLog(logId ?? "");
+  const formRef = useRef<HTMLFormElement>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const sortedModuleFields = useMemo(
     () => [...moduleFields].sort((first, second) => first.sortOrder - second.sortOrder),
@@ -68,10 +80,37 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
   const equipmentLabel = [values?.equipmentName, values?.equipmentCode ? `(${values.equipmentCode})` : ""]
     .filter(Boolean)
     .join(" ") || "No equipment";
+  const initialValues = useMemo<FormValues>(() => {
+    return sortedModuleFields.reduce<FormValues>((current, field) => {
+      current[`extractedFields.${field.key}`] = fieldInitialValue(field, values?.extractedFields?.[field.key]);
+      return current;
+    }, {});
+  }, [sortedModuleFields, values?.extractedFields]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const isDirty = !isEdit || isFormDirty(initialValues, currentValues);
+  const requiredSchemaFields = useMemo(
+    () => sortedModuleFields.filter((field) => field.required).map((field) => ({ key: `extractedFields.${field.key}`, label: field.label })),
+    [sortedModuleFields],
+  );
+  const createReady = !requiredSchemaFields.length || !hasFieldErrors(validateRequiredFields(currentValues, requiredSchemaFields));
+  const submitDisabled = schemaLoading || !isDirty || !createReady || hasFieldErrors(errors);
+
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
     const formData = new FormData(event.currentTarget);
+    const nextErrors = validateRequiredFields(readFormValues(event.currentTarget), requiredSchemaFields);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
     const extractedFields = sortedModuleFields.length
       ? extractedFieldsValue(formData, sortedModuleFields)
       : values?.extractedFields;
@@ -109,7 +148,7 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
   return (
     <DashboardCard>
       <CardContent className="p-4 sm:p-6">
-        <form className="space-y-6 pb-36" onSubmit={handleSubmit}>
+        <form ref={formRef} className="space-y-6 pb-36" onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
           <section className="grid gap-4 lg:grid-cols-2">
             <ReadonlyField label="Module" value={logLabel(moduleType)} />
             <ReadonlyField label="Equipment" value={equipmentLabel} />
@@ -127,7 +166,7 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
             ) : sortedModuleFields.length ? (
               <div className="grid gap-5 lg:grid-cols-2">
                 {sortedModuleFields.map((field) => (
-                  <SchemaField key={field.id} field={field} value={values?.extractedFields?.[field.key]} />
+                  <SchemaField key={field.id} field={field} value={values?.extractedFields?.[field.key]} error={errors[`extractedFields.${field.key}`]} />
                 ))}
               </div>
             ) : (
@@ -157,19 +196,11 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
             submitLabel={isEdit ? "Update Log" : "Create Log"}
             submitIcon={isEdit ? "settings" : "plus"}
             isSubmitting={isSubmitting}
+            submitDisabled={submitDisabled}
           />
         </form>
       </CardContent>
     </DashboardCard>
-  );
-}
-
-function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return (
-    <div className={cn("space-y-2", className)}>
-      <Label>{label}</Label>
-      {children}
-    </div>
   );
 }
 
@@ -193,7 +224,7 @@ function ReadonlyBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SchemaField({ field, value }: { field: ModuleField; value: unknown }) {
+function SchemaField({ field, value, error }: { field: ModuleField; value: unknown; error?: string }) {
   const name = `extractedFields.${field.key}`;
   const fieldType = field.type.toLowerCase();
   const label = `${field.label}${field.required ? " *" : ""}`;
@@ -209,9 +240,9 @@ function SchemaField({ field, value }: { field: ModuleField; value: unknown }) {
 
   if ((fieldType === "select" || shouldLoadMasterOptions) && options.length) {
     return (
-      <Field label={label}>
+      <Field label={label} fieldName={name} error={error}>
         <Select name={name} defaultValue={fieldStringValue(value) || undefined}>
-          <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
+          <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70" aria-invalid={Boolean(error)}>
             <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
@@ -226,7 +257,7 @@ function SchemaField({ field, value }: { field: ModuleField; value: unknown }) {
 
   if (shouldLoadMasterOptions && optionsQuery.isLoading) {
     return (
-      <Field label={label}>
+      <Field label={label} fieldName={name} error={error}>
         <div className="flex h-11 items-center rounded-xl border border-input bg-secondary/70 px-3 text-sm text-muted-foreground">
           Loading options...
         </div>
@@ -236,9 +267,9 @@ function SchemaField({ field, value }: { field: ModuleField; value: unknown }) {
 
   if (["boolean", "bool", "checkbox"].includes(fieldType)) {
     return (
-      <Field label={label}>
+      <Field label={label} fieldName={name} error={error}>
         <Select name={name} defaultValue={booleanStringValue(value)}>
-          <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
+          <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70" aria-invalid={Boolean(error)}>
             <SelectValue placeholder="Select value" />
           </SelectTrigger>
           <SelectContent>
@@ -252,15 +283,15 @@ function SchemaField({ field, value }: { field: ModuleField; value: unknown }) {
 
   if (["textarea", "long_text", "multiline"].includes(fieldType)) {
     return (
-      <Field label={label} className="lg:col-span-2">
-        <Textarea name={name} defaultValue={fieldStringValue(value)} placeholder={field.label} className="min-h-24 rounded-xl bg-secondary/70" required={field.required} />
+      <Field label={label} className="lg:col-span-2" fieldName={name} error={error}>
+        <Textarea name={name} defaultValue={fieldStringValue(value)} placeholder={field.label} className="min-h-24 rounded-xl bg-secondary/70" required={field.required} aria-invalid={Boolean(error)} />
       </Field>
     );
   }
 
   return (
-    <Field label={label}>
-      <Input name={name} defaultValue={fieldStringValue(value)} type={fieldType === "number" ? "number" : fieldType === "date" ? "date" : "text"} placeholder={field.label} className="h-11 rounded-xl bg-secondary/70" required={field.required} />
+    <Field label={label} fieldName={name} error={error}>
+      <Input name={name} defaultValue={fieldStringValue(value)} type={fieldType === "number" ? "number" : fieldType === "date" ? "date" : "text"} placeholder={field.label} className="h-11 rounded-xl bg-secondary/70" required={field.required} aria-invalid={Boolean(error)} />
     </Field>
   );
 }
@@ -292,6 +323,12 @@ function booleanStringValue(value: unknown) {
   if (typeof value === "boolean") return value ? "true" : "false";
   const stringified = fieldStringValue(value).toLowerCase();
   return stringified === "true" || stringified === "false" ? stringified : undefined;
+}
+
+function fieldInitialValue(field: ModuleField, value: unknown) {
+  const fieldType = field.type.toLowerCase();
+  if (["boolean", "bool", "checkbox"].includes(fieldType)) return booleanStringValue(value) ?? "";
+  return fieldStringValue(value);
 }
 
 function extractedFieldsValue(formData: FormData, fields: ModuleField[]) {

@@ -65,13 +65,13 @@ export default function LoginPage() {
       <div className="absolute inset-x-0 bottom-0 h-64 bg-[radial-gradient(circle_at_50%_100%,color-mix(in_oklch,var(--primary),transparent_72%),transparent_58%)] blur-2xl dark:h-80 dark:bg-[radial-gradient(circle_at_50%_100%,color-mix(in_oklch,var(--primary),transparent_45%),transparent_60%)]" />
       <Card className="relative w-full max-w-md rounded-3xl border-border bg-card/92 shadow-xl shadow-foreground/5 backdrop-blur">
         <CardHeader className="items-center justify-center pb-3 text-center">
-          <div className="relative h-28 w-72 max-w-full">
+          <div className="relative h-28 w-32 max-w-full">
             <Image
               src="/images/logo-dark.png"
               alt="VoxLogiX"
               fill
               priority
-              sizes="288px"
+              sizes="128px"
               className="object-contain dark:hidden"
             />
             <Image
@@ -79,7 +79,7 @@ export default function LoginPage() {
               alt="VoxLogiX"
               fill
               priority
-              sizes="288px"
+              sizes="128px"
               className="hidden object-contain dark:block"
             />
           </div>

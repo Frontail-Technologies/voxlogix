@@ -1,19 +1,28 @@
-﻿"use client";
+"use client";
 
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { CardContent, DashboardCard } from "@/components/common/dashboard-ui";
 import { FormActionBar } from "@/components/common/form-action-bar";
+import { FormField } from "@/components/common/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateLocation, useUpdateLocation } from "@/features/admin-master-data/api/master-data.mutations";
 import type { LocationPayload } from "@/features/admin-master-data/api/master-data.types";
 import { masterDataStatuses, normalizeMasterDataValue } from "@/features/admin-master-data/master-data.presentation";
 import { showApiErrorToast } from "@/lib/api/error-toast";
-import { cn } from "@/lib/utils";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  isFormDirty,
+  validateRequiredFields,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 
 export type LocationFormValues = Partial<LocationPayload>;
 
@@ -31,18 +40,47 @@ export function LocationForm({
   const updateMutation = useUpdateLocation(locationId ?? "");
   const isEdit = mode === "edit";
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const initialValues = useMemo<FormValues>(() => ({
+    plant: values?.plant ?? "",
+    unit: values?.unit ?? "",
+    section: values?.section ?? "",
+    subLocation: values?.subLocation ?? "",
+    shiftDetails: values?.shiftDetails ?? "",
+    department: values?.department ?? "",
+    status: normalizeMasterDataValue(values?.status) || "ACTIVE",
+  }), [values?.department, values?.plant, values?.section, values?.shiftDetails, values?.status, values?.subLocation, values?.unit]);
+  const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const isDirty = !isEdit || isFormDirty(initialValues, formValues);
+  const createReady = Boolean(formValues.plant) && Boolean(formValues.section) && Boolean(formValues.subLocation);
+
+  function updateField(key: string, value: string) {
+    setFormValues((current) => ({ ...current, [key]: value }));
+    setErrors((current) => clearFieldError(current, key));
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    blurActiveElement();
+    const nextErrors = validateRequiredFields(formValues, [
+      { key: "plant", label: "Plant" },
+      { key: "section", label: "Section" },
+      { key: "subLocation", label: "Sub location" },
+    ]);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
+
     const payload: LocationPayload = {
-      plant: stringValue(formData, "plant"),
-      unit: nullableValue(formData, "unit"),
-      section: stringValue(formData, "section"),
-      subLocation: stringValue(formData, "subLocation"),
-      shiftDetails: nullableValue(formData, "shiftDetails"),
-      department: nullableValue(formData, "department"),
-      status: stringValue(formData, "status") || "ACTIVE",
+      plant: String(formValues.plant ?? "").trim(),
+      unit: nullableValue(formValues.unit),
+      section: String(formValues.section ?? "").trim(),
+      subLocation: String(formValues.subLocation ?? "").trim(),
+      shiftDetails: nullableValue(formValues.shiftDetails),
+      department: nullableValue(formValues.department),
+      status: String(formValues.status ?? "ACTIVE"),
     };
 
     try {
@@ -62,51 +100,70 @@ export function LocationForm({
   return (
     <DashboardCard>
       <CardContent className="p-4 sm:p-6">
-        <form className="space-y-8 pb-36" onSubmit={handleSubmit}>
+        <form className="space-y-8 pb-36" onSubmit={handleSubmit} noValidate>
           <div className="grid gap-6 lg:grid-cols-2">
-            <Field label="Plant">
-              <Input name="plant" defaultValue={values?.plant} placeholder="Plant 1" className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
-            <Field label="Unit">
-              <Input name="unit" defaultValue={values?.unit ?? undefined} placeholder="Unit A" className="h-11 rounded-xl bg-secondary/70" />
-            </Field>
-            <Field label="Section">
-              <Input name="section" defaultValue={values?.section} placeholder="Earthworks" className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
-            <Field label="Sub Location">
-              <Input name="subLocation" defaultValue={values?.subLocation} placeholder="Pit A" className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
-            <Field label="Shift Details">
-              <Input name="shiftDetails" defaultValue={values?.shiftDetails ?? undefined} placeholder="A Shift / 06:00-14:00" className="h-11 rounded-xl bg-secondary/70" />
-            </Field>
-            <Field label="Department">
-              <Input name="department" defaultValue={values?.department ?? undefined} placeholder="Maintenance" className="h-11 rounded-xl bg-secondary/70" />
-            </Field>
-            <Field label="Status">
-              <Select name="status" defaultValue={normalizeMasterDataValue(values?.status) || "ACTIVE"}>
-                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger>
+            <TextField label="Plant" name="plant" value={formValues.plant} error={errors.plant} placeholder="Plant 1" onChange={updateField} />
+            <TextField label="Unit" name="unit" value={formValues.unit} placeholder="Unit A" onChange={updateField} />
+            <TextField label="Section" name="section" value={formValues.section} error={errors.section} placeholder="Earthworks" onChange={updateField} />
+            <TextField label="Sub Location" name="subLocation" value={formValues.subLocation} error={errors.subLocation} placeholder="Pit A" onChange={updateField} />
+            <TextField label="Shift Details" name="shiftDetails" value={formValues.shiftDetails} placeholder="A Shift / 06:00-14:00" onChange={updateField} />
+            <TextField label="Department" name="department" value={formValues.department} placeholder="Maintenance" onChange={updateField} />
+            <FormField label="Status">
+              <Select value={String(formValues.status ?? "ACTIVE")} onValueChange={(value) => updateField("status", value ?? "ACTIVE")}>
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {masterDataStatuses.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
+                  {masterDataStatuses.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </Field>
+            </FormField>
           </div>
-          <FormActionBar cancelHref="/admin/locations" submitLabel={isEdit ? "Update Location" : "Add Location"} submitIcon={isEdit ? "settings" : "plus"} isSubmitting={isSubmitting} />
+          <FormActionBar
+            cancelHref="/admin/locations"
+            submitLabel={isEdit ? "Update Location" : "Add Location"}
+            submitIcon={isEdit ? "settings" : "plus"}
+            isSubmitting={isSubmitting}
+            submitDisabled={!isDirty || !createReady || hasFieldErrors(errors)}
+          />
         </form>
       </CardContent>
     </DashboardCard>
   );
 }
 
-function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div className={cn("space-y-2", className)}><Label>{label}</Label>{children}</div>;
+function TextField({
+  label,
+  name,
+  value,
+  error,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: FormValues[string];
+  error?: string;
+  placeholder: string;
+  onChange: (key: string, value: string) => void;
+}) {
+  return (
+    <FormField label={label} fieldName={name} error={error}>
+      <Input
+        name={name}
+        value={String(value ?? "")}
+        onChange={(event) => onChange(name, event.target.value)}
+        placeholder={placeholder}
+        className="h-11 rounded-xl bg-secondary/70"
+        aria-invalid={Boolean(error)}
+      />
+    </FormField>
+  );
 }
 
-function stringValue(formData: FormData, key: string) {
-  return String(formData.get(key) ?? "").trim();
-}
-
-function nullableValue(formData: FormData, key: string) {
-  const value = stringValue(formData, key);
-  return value || null;
+function nullableValue(value: FormValues[string]) {
+  const stringValue = String(value ?? "").trim();
+  return stringValue || null;
 }

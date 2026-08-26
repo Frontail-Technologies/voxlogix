@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppIcon } from "@/components/common/app-icon";
@@ -12,6 +12,7 @@ import {
   DashboardCard,
   DashboardPageHeader,
 } from "@/components/common/dashboard-ui";
+import { FormField } from "@/components/common/form-field";
 import { MasterDetailSkeleton } from "@/components/master/master-skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,14 @@ import { useUpdateLog } from "@/features/logs/api/log.mutations";
 import { useLogDetail } from "@/features/logs/api/log.queries";
 import type { AdminLogDetail } from "@/features/logs/api/log.types";
 import { showApiErrorToast } from "@/lib/api/error-toast";
+import {
+  blurActiveElement,
+  clearFieldError,
+  hasFieldErrors,
+  isFormDirty,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 
 type DraftFields = {
   title: string;
@@ -74,13 +83,31 @@ export function EditDraftLogView({ logId }: { logId: string }) {
 function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
   const router = useRouter();
   const updateMutation = useUpdateLog(logId);
-  const [fields, setFields] = useState<DraftFields>(() => fieldsFromLog(log));
+  const initialFields = useMemo(() => fieldsFromLog(log), [log]);
+  const [fields, setFields] = useState<DraftFields>(() => initialFields);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const formValues: FormValues = fields;
+  const isDirty = isFormDirty(initialFields, formValues);
+  const hasRequiredFields = Boolean(fields.title.trim() && Number.isFinite(fields.downtimeMinutes) && fields.downtimeMinutes >= 0);
 
   function updateField<K extends keyof DraftFields>(key: K, value: DraftFields[K]) {
     setFields((current) => ({ ...current, [key]: value }));
+    setErrors((current) => clearFieldError(current, key));
   }
 
   async function submit(status: "SUBMITTED" | "DRAFT") {
+    blurActiveElement();
+    const nextErrors: FieldErrors = {};
+    if (!fields.title.trim()) nextErrors.title = "Title is required.";
+    if (!Number.isFinite(fields.downtimeMinutes) || fields.downtimeMinutes < 0) {
+      nextErrors.downtimeMinutes = "Downtime must be zero or more.";
+    }
+    if (status === "DRAFT" && !isDirty) return;
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      return;
+    }
+
     try {
       await updateMutation.mutateAsync({
         title: fields.title,
@@ -110,14 +137,14 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
         <CardTitle>Draft Details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 px-4 pb-4 pt-1 sm:px-5 sm:pb-5 sm:pt-2">
-        <div className="space-y-2">
-          <Label>Title</Label>
+        <FormField label="Title" fieldName="title" error={errors.title}>
           <Input
             value={fields.title}
             onChange={(event) => updateField("title", event.target.value)}
             className="h-11 rounded-xl bg-secondary/70"
+            aria-invalid={Boolean(errors.title)}
           />
-        </div>
+        </FormField>
         <div className="space-y-2">
           <Label>Problem Description</Label>
           <Textarea
@@ -135,15 +162,16 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
               className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Downtime (minutes)</Label>
+          <FormField label="Downtime (minutes)" fieldName="downtimeMinutes" error={errors.downtimeMinutes}>
             <Input
               type="number"
               value={fields.downtimeMinutes}
               onChange={(event) => updateField("downtimeMinutes", Number(event.target.value))}
               className="h-11 rounded-xl bg-secondary/70"
+              min={0}
+              aria-invalid={Boolean(errors.downtimeMinutes)}
             />
-          </div>
+          </FormField>
         </div>
         <div className="space-y-2">
           <Label>Root Cause</Label>
@@ -187,11 +215,11 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button type="button" className="rounded-xl" onClick={() => void submit("SUBMITTED")} disabled={updateMutation.isPending}>
+          <Button type="button" className="rounded-xl" onClick={() => void submit("SUBMITTED")} disabled={updateMutation.isPending || !hasRequiredFields || hasFieldErrors(errors)}>
             <AppIcon name="status" className="size-4" />
             Submit Log
           </Button>
-          <Button type="button" variant="outline" className="rounded-xl" onClick={() => void submit("DRAFT")} disabled={updateMutation.isPending}>
+          <Button type="button" variant="outline" className="rounded-xl" onClick={() => void submit("DRAFT")} disabled={updateMutation.isPending || !isDirty || !hasRequiredFields || hasFieldErrors(errors)}>
             Save Draft
           </Button>
         </div>

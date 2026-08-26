@@ -54,6 +54,7 @@ export function KpiDashboardView() {
   const [toDate, setToDate] = useState(defaults.toDate);
   const [queryParams, setQueryParams] = useState(defaults);
   const [isDownloading, setIsDownloading] = useState(false);
+  const dateError = getDateRangeError(fromDate, toDate);
 
   const dashboardQuery = useQuery({
     queryKey: ["reports", "kpi-dashboard", queryParams],
@@ -68,8 +69,8 @@ export function KpiDashboardView() {
   const isLoading = dashboardQuery.isLoading;
 
   function handleGenerate() {
-    if (!fromDate || !toDate) {
-      toast.error("Select From Date and To Date.");
+    if (dateError) {
+      toast.error(dateError);
       return;
     }
 
@@ -77,8 +78,8 @@ export function KpiDashboardView() {
   }
 
   async function handleDownload() {
-    if (!fromDate || !toDate) {
-      toast.error("Select From Date and To Date.");
+    if (dateError) {
+      toast.error(dateError);
       return;
     }
 
@@ -136,15 +137,16 @@ export function KpiDashboardView() {
             <RotateCcw className="size-4" />
             Reset
           </Button>
-          <Button type="button" onClick={handleGenerate} disabled={isLoading}>
+          <Button type="button" onClick={handleGenerate} disabled={isLoading || Boolean(dateError)}>
             {isLoading ? <LoadingSpinner className="[&_svg]:size-4" /> : <BarChart3 className="size-4" />}
             Generate KPI
           </Button>
-          <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+          <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading || Boolean(dateError)}>
             {isDownloading ? <LoadingSpinner className="[&_svg]:size-4" /> : <Download className="size-4" />}
             Download Excel
           </Button>
         </div>
+        {dateError ? <p className="mt-3 text-sm font-medium text-destructive">{dateError}</p> : null}
       </section>
 
       {dashboardQuery.isError ? (
@@ -508,6 +510,12 @@ function toDateValue(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getDateRangeError(fromDate: string, toDate: string) {
+  if (!fromDate || !toDate) return "Select From Date and To Date.";
+  if (fromDate > toDate) return "From Date cannot be after To Date.";
+  return "";
 }
 
 function formatNumber(value: number | null) {

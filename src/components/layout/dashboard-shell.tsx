@@ -128,13 +128,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       >
         <SidebarHeader className="border-b border-sidebar-border/55 p-4 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-5">
           <div className="flex w-full min-w-0 items-center justify-between gap-3 group-data-[collapsible=icon]:flex-col">
-            <div className="relative flex h-12 w-36 items-center overflow-hidden transition-all duration-300 ease-in-out group-data-[collapsible=icon]:hidden">
+            <div className="relative flex h-12 w-14 items-center overflow-hidden transition-all duration-300 ease-in-out group-data-[collapsible=icon]:hidden">
               <Image
                 src="/images/logo-light.png"
                 alt="VoxLogiX"
                 fill
                 priority
-                sizes="128px"
+                sizes="56px"
                 className="object-contain"
               />
             </div>
@@ -216,13 +216,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-20 border-b border-border bg-card/95 px-3 py-2 backdrop-blur lg:hidden">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="relative h-12 w-24 md:w-44 lg:hidden">
+                <div className="relative h-12 w-14 lg:hidden">
                   <Image
                     src="/images/logo-dark.png"
                     alt="VoxLogiX"
                     fill
                     priority
-                    sizes="128px"
+                    sizes="56px"
                     className="object-contain dark:hidden"
                   />
                   <Image
@@ -230,7 +230,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     alt="VoxLogiX"
                     fill
                     priority
-                    sizes="128px"
+                    sizes="56px"
                     className="hidden object-contain dark:block"
                   />
                 </div>

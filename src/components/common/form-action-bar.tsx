@@ -10,6 +10,7 @@ type FormActionBarProps = {
   submitIcon?: AppIconName;
   className?: string;
   isSubmitting?: boolean;
+  submitDisabled?: boolean;
 };
 
 export function FormActionBar({
@@ -18,6 +19,7 @@ export function FormActionBar({
   submitIcon,
   className,
   isSubmitting,
+  submitDisabled,
 }: FormActionBarProps) {
   return (
     <div
@@ -38,7 +40,7 @@ export function FormActionBar({
       <Button
         type="submit"
         className="h-10 flex-1 rounded-xl lg:flex-none"
-        disabled={isSubmitting}
+        disabled={isSubmitting || submitDisabled}
       >
         {submitIcon ? <AppIcon name={submitIcon} className="size-4" /> : null}
         {isSubmitting ? "Saving..." : submitLabel}

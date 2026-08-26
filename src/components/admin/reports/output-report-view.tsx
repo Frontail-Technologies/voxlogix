@@ -37,12 +37,13 @@ export function OutputReportView() {
   const [summary, setSummary] = useState<OutputReportSummary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const dateError = getDateRangeError(fromDate, toDate);
 
-  const canDownload = Boolean(summary?.hasRecords && !isGenerating && !isDownloading);
+  const canDownload = Boolean(summary?.hasRecords && !isGenerating && !isDownloading && !dateError);
 
   async function handleGenerate() {
-    if (!fromDate || !toDate) {
-      toast.error("Select From Date and To Date.");
+    if (dateError) {
+      toast.error(dateError);
       return;
     }
 
@@ -113,7 +114,7 @@ export function OutputReportView() {
             <RotateCcw className="size-4" />
             Reset
           </Button>
-          <Button type="button" onClick={handleGenerate} disabled={isGenerating}>
+          <Button type="button" onClick={handleGenerate} disabled={isGenerating || Boolean(dateError)}>
             {isGenerating ? <LoadingSpinner className="[&_svg]:size-4" /> : <FileSpreadsheet className="size-4" />}
             Generate Report
           </Button>
@@ -122,6 +123,7 @@ export function OutputReportView() {
             Download Excel
           </Button>
         </div>
+        {dateError ? <p className="mt-3 text-sm font-medium text-destructive">{dateError}</p> : null}
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -193,4 +195,10 @@ function toDateValue(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getDateRangeError(fromDate: string, toDate: string) {
+  if (!fromDate || !toDate) return "Select From Date and To Date.";
+  if (fromDate > toDate) return "From Date cannot be after To Date.";
+  return "";
 }

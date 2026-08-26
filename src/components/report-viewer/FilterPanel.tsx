@@ -102,6 +102,8 @@ export function FilterPanel({ filters, onGenerate, loading }: FilterPanelProps) 
 
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, FilterOption[]>>({})
   const [optionsLoading, setOptionsLoading] = useState<Record<string, boolean>>({})
+  const errors = getFilterErrors(filters, values)
+  const hasErrors = Object.keys(errors).length > 0
 
   useEffect(() => {
     filters.forEach((filter) => {
@@ -164,6 +166,7 @@ export function FilterPanel({ filters, onGenerate, loading }: FilterPanelProps) 
             const isLoading = optionsLoading[filter.key]
             const selectedValue = values[filter.key] as string
             const selectedLabel = options.find((option) => option.value === selectedValue)?.label
+            const error = errors[filter.key]
 
             return (
               <div key={filter.key} className="space-y-1.5">
@@ -245,19 +248,22 @@ export function FilterPanel({ filters, onGenerate, loading }: FilterPanelProps) 
                 {filter.type === 'daterange' && (() => {
                   const range = ((values[filter.key] as string[]) ?? ['', '']) as DateRangeValue
                   return (
-                    <div className="flex items-center gap-2">
-                      <DatePickerButton
-                        value={range[0] ?? ''}
-                        placeholder="From"
-                        onChange={(value) => handleRangeChange(filter.key, 0, value)}
-                      />
-                      <span className="text-xs font-medium text-muted-foreground">to</span>
-                      <DatePickerButton
-                        value={range[1] ?? ''}
-                        placeholder="To"
-                        onChange={(value) => handleRangeChange(filter.key, 1, value)}
-                      />
-                    </div>
+                    <>
+                      <div className="flex items-center gap-2">
+                        <DatePickerButton
+                          value={range[0] ?? ''}
+                          placeholder="From"
+                          onChange={(value) => handleRangeChange(filter.key, 0, value)}
+                        />
+                        <span className="text-xs font-medium text-muted-foreground">to</span>
+                        <DatePickerButton
+                          value={range[1] ?? ''}
+                          placeholder="To"
+                          onChange={(value) => handleRangeChange(filter.key, 1, value)}
+                        />
+                      </div>
+                      {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+                    </>
                   )
                 })()}
               </div>
@@ -294,7 +300,7 @@ export function FilterPanel({ filters, onGenerate, loading }: FilterPanelProps) 
           type="button"
           variant="outline"
           onClick={handleReset}
-          disabled={loading}
+          disabled={loading || hasErrors}
           className="rounded-xl px-4 text-xs font-semibold uppercase tracking-wide"
         >
           <RotateCcw className="mr-2 size-3.5" />
@@ -311,6 +317,24 @@ export function FilterPanel({ filters, onGenerate, loading }: FilterPanelProps) 
       </div>
     </div>
   )
+}
+
+function getFilterErrors(filters: FilterConfig[], values: Record<string, string | string[]>) {
+  const errors: Record<string, string> = {}
+
+  filters.forEach((filter) => {
+    if (filter.type !== 'daterange') return
+    const [fromDate = '', toDate = ''] = ((values[filter.key] as string[]) ?? ['', '']) as DateRangeValue
+    if (filter.required && (!fromDate || !toDate)) {
+      errors[filter.key] = 'Select both dates.'
+      return
+    }
+    if (fromDate && toDate && fromDate > toDate) {
+      errors[filter.key] = 'From date cannot be after To date.'
+    }
+  })
+
+  return errors
 }
 
 

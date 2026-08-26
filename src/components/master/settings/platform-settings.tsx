@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { showApiErrorToast } from "@/lib/api/error-toast";
 
 import { AppIcon } from "@/components/common/app-icon";
-import { AssetUploadPanel } from "@/components/common/asset-upload-panel";
 import { DeleteConfirmDialog } from "@/components/common/delete-confirm-dialog";
 import { DashboardCard, DashboardPageHeader, StatusBadge } from "@/components/common/dashboard-ui";
+import { FormField } from "@/components/common/form-field";
 import { MasterFormSkeleton } from "@/components/master/master-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,9 +49,18 @@ import {
 } from "@/features/master-module-categories/api/module-category.mutations";
 import { useModuleCategoriesList } from "@/features/master-module-categories/api/module-category.queries";
 import type { ModuleCategory } from "@/features/master-module-categories/api/module-category.types";
-import type { ImageAssetValue } from "@/features/uploads/api/upload.types";
-import { isPendingImageAsset } from "@/features/uploads/api/upload.types";
 import { buildMultipartPayload } from "@/lib/api/multipart";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  isFormDirty,
+  readFormValues,
+  validateRequiredFields,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 
 const providerOptions = ["OpenAI", "Gemini", "Azure OpenAI", "Custom Provider"];
 const providerModelOptions: Record<string, string[]> = {
@@ -127,34 +136,42 @@ export function PlatformSettings() {
 
 function GeneralSettingsPanel({ settings }: { settings: GeneralSettings }) {
   const updateMutation = useUpdateGeneralSettings();
-  const [logoAsset, setLogoAsset] = useState<ImageAssetValue | null>(() =>
-    settings.logoUrl && settings.logoKey
-      ? {
-          provider: "cloudinary",
-          key: settings.logoKey,
-          url: settings.logoUrl,
-          secureUrl: settings.logoUrl,
-          mimeType: "image/*",
-          bytes: 0,
-        }
-      : null,
-  );
   const [maintenanceMessage, setMaintenanceMessage] = useState(settings.maintenanceMessage);
   const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(
     settings.maintenanceModeEnabled,
   );
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [baselineValues, setBaselineValues] = useState<FormValues>(() => ({
+    maintenanceModeEnabled: settings.maintenanceModeEnabled,
+    maintenanceMessage: settings.maintenanceMessage ?? "",
+  }));
+  const currentValues: FormValues = {
+    maintenanceModeEnabled,
+    maintenanceMessage,
+  };
+  const isDirty = isFormDirty(baselineValues, currentValues);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
+    if (!isDirty) return;
+    const nextErrors = validateRequiredFields({ maintenanceMessage }, [
+      { key: "maintenanceMessage", label: "Maintenance message" },
+    ]);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
 
     try {
       await updateMutation.mutateAsync(buildMultipartPayload({
         platformName: settings.platformName,
-        logoUrl: isPendingImageAsset(logoAsset) ? settings.logoUrl : logoAsset?.secureUrl ?? logoAsset?.url ?? null,
-        logoKey: isPendingImageAsset(logoAsset) ? settings.logoKey : logoAsset?.key ?? null,
         maintenanceModeEnabled,
         maintenanceMessage: maintenanceMessage.trim(),
-      }, isPendingImageAsset(logoAsset) ? logoAsset.file : null));
+      }, null));
+      setBaselineValues(currentValues);
+      setErrors({});
       toast.success("General settings saved");
     } catch (error) {
       showApiErrorToast(error, "Could not save general settings");
@@ -163,23 +180,8 @@ function GeneralSettingsPanel({ settings }: { settings: GeneralSettings }) {
 
   return (
     <CardContent className="p-4 sm:p-6">
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit} noValidate>
         <div className="grid gap-6 xl:grid-cols-2">
-          <div className="xl:col-span-2">
-            <Label>Platform Logo</Label>
-            <AssetUploadPanel
-              className="mt-2"
-              title={settings.platformName || "VoxLogiX"}
-              buttonLabel="Choose Logo"
-              folder="platform"
-              context="generic-image"
-              fileName="platform-logo"
-              initials="VX"
-              value={logoAsset}
-              onChange={setLogoAsset}
-            />
-          </div>
-
           <ToggleCard
             title="Maintenance Mode"
             description="Temporarily show users that the platform is unavailable."
@@ -187,20 +189,23 @@ function GeneralSettingsPanel({ settings }: { settings: GeneralSettings }) {
             onCheckedChange={setMaintenanceModeEnabled}
           />
 
-          <Field label="Maintenance Message" className="xl:col-span-2">
+          <FormField label="Maintenance Message" className="xl:col-span-2" fieldName="maintenanceMessage" error={errors.maintenanceMessage}>
             <Textarea
               name="maintenanceMessage"
               value={maintenanceMessage}
-              onChange={(event) => setMaintenanceMessage(event.target.value)}
+              onChange={(event) => {
+                setMaintenanceMessage(event.target.value);
+                setErrors((current) => clearFieldError(current, "maintenanceMessage"));
+              }}
               className="min-h-24 rounded-xl bg-secondary/70"
               placeholder="We are performing scheduled maintenance. Please check back soon."
-              required
+              aria-invalid={Boolean(errors.maintenanceMessage)}
             />
-          </Field>
+          </FormField>
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" className="rounded-xl" disabled={updateMutation.isPending}>
+          <Button type="submit" className="rounded-xl" disabled={updateMutation.isPending || !isDirty || hasFieldErrors(errors)}>
             {updateMutation.isPending ? "Saving..." : "Save General Settings"}
           </Button>
         </div>
@@ -364,35 +369,92 @@ function AiProviderConfigDialog({
   const updateMutation = useUpdateAiProviderConfig(config?.id ?? "");
   const [showApiKey, setShowApiKey] = useState(false);
   const [provider, setProvider] = useState(config?.provider ?? providerOptions[0]);
+  const [keyStatus, setKeyStatus] = useState(config?.keyStatus ?? "Testing");
   const [structuredExtractionEnabled, setStructuredExtractionEnabled] = useState(
     config?.structuredExtractionEnabled ?? true,
   );
   const [usageCostAlertsEnabled, setUsageCostAlertsEnabled] = useState(
     config?.usageCostAlertsEnabled ?? true,
   );
+  const initialValues = useMemo<FormValues>(() => ({
+    provider: config?.provider ?? providerOptions[0],
+    defaultModel: config?.defaultModel ?? "",
+    apiKeyName: config?.apiKeyName ?? "",
+    apiKey: "",
+    keyStatus: config?.keyStatus ?? "Testing",
+    structuredExtractionEnabled: config?.structuredExtractionEnabled ?? true,
+    usageCostAlertsEnabled: config?.usageCostAlertsEnabled ?? true,
+  }), [config?.apiKeyName, config?.defaultModel, config?.keyStatus, config?.provider, config?.structuredExtractionEnabled, config?.usageCostAlertsEnabled]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const isDirty = !isEditing || isFormDirty(initialValues, currentValues);
+  const createReady = Boolean(
+    String(currentValues.defaultModel ?? "").trim() &&
+    String(currentValues.apiKeyName ?? "").trim() &&
+    String(currentValues.apiKey ?? "").trim().length >= 8 &&
+    keyStatus,
+  );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget, {
+      provider,
+      keyStatus,
+      structuredExtractionEnabled,
+      usageCostAlertsEnabled,
+    }));
+  }
+
+  function updateToggle(key: "structuredExtractionEnabled" | "usageCostAlertsEnabled", checked: boolean) {
+    if (key === "structuredExtractionEnabled") setStructuredExtractionEnabled(checked);
+    if (key === "usageCostAlertsEnabled") setUsageCostAlertsEnabled(checked);
+    setCurrentValues((current) => ({ ...current, [key]: checked }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
     const formData = new FormData(event.currentTarget);
+    const formValues = readFormValues(event.currentTarget, {
+      provider,
+      keyStatus,
+      structuredExtractionEnabled,
+      usageCostAlertsEnabled,
+    });
+    const nextErrors = validateRequiredFields(formValues, [
+      { key: "defaultModel", label: "Default model" },
+      { key: "apiKeyName", label: "API key name" },
+      ...(isEditing ? [] : [{ key: "apiKey", label: "API key" }]),
+      { key: "keyStatus", label: "Key status" },
+    ]);
+    const apiKey = stringValue(formData, "apiKey");
+    if (apiKey && apiKey.length < 8) nextErrors.apiKey = "API key must be at least 8 characters.";
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
 
     const payload = {
       provider,
       defaultModel: stringValue(formData, "defaultModel"),
       apiKeyName: stringValue(formData, "apiKeyName"),
-      apiKey: stringValue(formData, "apiKey"),
-      keyStatus: stringValue(formData, "keyStatus"),
+      keyStatus,
       structuredExtractionEnabled,
       usageCostAlertsEnabled,
     };
+    const payloadWithKey = apiKey ? { ...payload, apiKey } : payload;
 
     try {
       if (isEditing && config) {
-        await updateMutation.mutateAsync(payload);
+        if (!isDirty) return;
+        await updateMutation.mutateAsync(payloadWithKey);
         toast.success("AI provider updated");
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync(payloadWithKey as typeof payload & { apiKey: string });
         toast.success("AI provider added");
       }
       onOpenChange(false);
@@ -406,7 +468,7 @@ function AiProviderConfigDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit AI Provider" : "Add AI Provider"}</DialogTitle>
             <DialogDescription>
@@ -415,7 +477,7 @@ function AiProviderConfigDialog({
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Field label="AI Provider">
-              <Select value={provider} onValueChange={(value) => value && setProvider(value)}>
+              <Select value={provider} onValueChange={(value) => { if (!value) return; setProvider(value); setCurrentValues((current) => ({ ...current, provider: value })); }}>
                 <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {providerOptions.map((option) => (
@@ -424,33 +486,34 @@ function AiProviderConfigDialog({
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Default Model">
+            <FormField label="Default Model" fieldName="defaultModel" error={errors.defaultModel}>
               <Input
                 name="defaultModel"
                 defaultValue={config?.defaultModel}
                 placeholder={modelSuggestions[0] ?? "model-name"}
                 list="ai-model-suggestions"
                 className="h-11 rounded-xl bg-secondary/70"
-                required
+                aria-invalid={Boolean(errors.defaultModel)}
               />
               <datalist id="ai-model-suggestions">
                 {modelSuggestions.map((model) => (
                   <option key={model} value={model} />
                 ))}
               </datalist>
-            </Field>
-            <Field label="API Key Name">
-              <Input name="apiKeyName" defaultValue={config?.apiKeyName} className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
-            <Field label="API Key">
+            </FormField>
+            <FormField label="API Key Name" fieldName="apiKeyName" error={errors.apiKeyName}>
+              <Input name="apiKeyName" defaultValue={config?.apiKeyName} className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.apiKeyName)} />
+            </FormField>
+            <FormField label={isEditing ? "Replace API Key" : "API Key"} fieldName="apiKey" error={errors.apiKey}>
               <div className="relative">
                 <Input
                   name="apiKey"
                   type={showApiKey ? "text" : "password"}
-                  defaultValue={config?.apiKey}
+                  defaultValue=""
+                  placeholder={isEditing ? "Leave blank to keep current key" : "Enter API key"}
                   className="h-11 rounded-xl bg-secondary/70 pr-11"
                   minLength={8}
-                  required
+                  aria-invalid={Boolean(errors.apiKey)}
                 />
                 <Button
                   type="button"
@@ -463,23 +526,31 @@ function AiProviderConfigDialog({
                   <span className="sr-only">{showApiKey ? "Hide API key" : "Show API key"}</span>
                 </Button>
               </div>
-            </Field>
-            <Field label="Key Status">
-              <Select name="keyStatus" defaultValue={config?.keyStatus ?? "Testing"}>
-                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger>
+            </FormField>
+            <FormField label="Key Status" fieldName="keyStatus" error={errors.keyStatus}>
+              <Select
+                value={keyStatus}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setKeyStatus(value);
+                  setErrors((current) => clearFieldError(current, "keyStatus"));
+                  setCurrentValues((current) => ({ ...current, keyStatus: value }));
+                }}
+              >
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.keyStatus)}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {keyStatusOptions.map((status) => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </Field>
-            <ToggleCard title="AI Structured Extraction" description="Use this provider for structured log extraction." checked={structuredExtractionEnabled} onCheckedChange={setStructuredExtractionEnabled} />
-            <ToggleCard title="Usage Cost Alerts" description="Notify Master when usage crosses limits." checked={usageCostAlertsEnabled} onCheckedChange={setUsageCostAlertsEnabled} />
+            </FormField>
+            <ToggleCard title="AI Structured Extraction" description="Use this provider for structured log extraction." checked={structuredExtractionEnabled} onCheckedChange={(checked) => updateToggle("structuredExtractionEnabled", checked)} />
+            <ToggleCard title="Usage Cost Alerts" description="Notify Master when usage crosses limits." checked={usageCostAlertsEnabled} onCheckedChange={(checked) => updateToggle("usageCostAlertsEnabled", checked)} />
           </div>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" className="rounded-xl" />}>Cancel</DialogClose>
-            <Button type="submit" className="rounded-xl" disabled={isPending}>
+            <Button type="submit" className="rounded-xl" disabled={isPending || hasFieldErrors(errors) || (isEditing ? !isDirty : !createReady)}>
               {isPending ? "Saving..." : isEditing ? "Save Changes" : "Add Provider"}
             </Button>
           </DialogFooter>
@@ -617,12 +688,37 @@ function ModuleTypeDialog({
   const createMutation = useCreateModuleType();
   const updateMutation = useUpdateModuleType(moduleType?.id ?? "");
   const [status, setStatus] = useState(moduleType?.status ?? "ACTIVE");
+  const initialValues = useMemo<FormValues>(() => ({
+    name: moduleType?.name ?? "",
+    description: moduleType?.description ?? "",
+    status: moduleType?.status ?? "ACTIVE",
+  }), [moduleType?.description, moduleType?.name, moduleType?.status]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const isDirty = !isEditing || isFormDirty(initialValues, currentValues);
+  const createReady = Boolean(String(currentValues.name ?? "").trim());
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget, { status }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
     const formData = new FormData(event.currentTarget);
+    const nextErrors = validateRequiredFields(readFormValues(event.currentTarget, { status }), [
+      { key: "name", label: "Name" },
+    ]);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
+    if (isEditing && !isDirty) return;
 
     const payload = {
       name: stringValue(formData, "name"),
@@ -647,7 +743,7 @@ function ModuleTypeDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Module Type" : "Add Module Type"}</DialogTitle>
             <DialogDescription>
@@ -655,14 +751,21 @@ function ModuleTypeDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Field label="Name">
-              <Input name="name" defaultValue={moduleType?.name} placeholder="Equipment Log" className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
+            <FormField label="Name" fieldName="name" error={errors.name}>
+              <Input name="name" defaultValue={moduleType?.name} placeholder="Equipment Log" className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.name)} />
+            </FormField>
             <Field label="Description">
               <Textarea name="description" defaultValue={moduleType?.description ?? undefined} placeholder="What kind of modules use this type..." className="min-h-20 rounded-xl bg-secondary/70" />
             </Field>
             <Field label="Status">
-              <Select value={status} onValueChange={(value) => value && setStatus(value)}>
+              <Select
+                value={status}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setStatus(value);
+                  setCurrentValues((current) => ({ ...current, status: value }));
+                }}
+              >
                 <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Active</SelectItem>
@@ -673,7 +776,7 @@ function ModuleTypeDialog({
           </div>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" className="rounded-xl" />}>Cancel</DialogClose>
-            <Button type="submit" className="rounded-xl" disabled={isPending}>
+            <Button type="submit" className="rounded-xl" disabled={isPending || hasFieldErrors(errors) || (isEditing ? !isDirty : !createReady)}>
               {isPending ? "Saving..." : isEditing ? "Save Changes" : "Add Module Type"}
             </Button>
           </DialogFooter>
@@ -811,12 +914,37 @@ function ModuleCategoryDialog({
   const createMutation = useCreateModuleCategory();
   const updateMutation = useUpdateModuleCategory(moduleCategory?.id ?? "");
   const [status, setStatus] = useState(moduleCategory?.status ?? "ACTIVE");
+  const initialValues = useMemo<FormValues>(() => ({
+    name: moduleCategory?.name ?? "",
+    description: moduleCategory?.description ?? "",
+    status: moduleCategory?.status ?? "ACTIVE",
+  }), [moduleCategory?.description, moduleCategory?.name, moduleCategory?.status]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const isDirty = !isEditing || isFormDirty(initialValues, currentValues);
+  const createReady = Boolean(String(currentValues.name ?? "").trim());
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget, { status }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
     const formData = new FormData(event.currentTarget);
+    const nextErrors = validateRequiredFields(readFormValues(event.currentTarget, { status }), [
+      { key: "name", label: "Name" },
+    ]);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
+    if (isEditing && !isDirty) return;
 
     const payload = {
       name: stringValue(formData, "name"),
@@ -841,7 +969,7 @@ function ModuleCategoryDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Module Category" : "Add Module Category"}</DialogTitle>
             <DialogDescription>
@@ -849,14 +977,21 @@ function ModuleCategoryDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Field label="Name">
-              <Input name="name" defaultValue={moduleCategory?.name} placeholder="Operational" className="h-11 rounded-xl bg-secondary/70" required />
-            </Field>
+            <FormField label="Name" fieldName="name" error={errors.name}>
+              <Input name="name" defaultValue={moduleCategory?.name} placeholder="Operational" className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.name)} />
+            </FormField>
             <Field label="Description">
               <Textarea name="description" defaultValue={moduleCategory?.description ?? undefined} placeholder="Where this category should be used..." className="min-h-20 rounded-xl bg-secondary/70" />
             </Field>
             <Field label="Status">
-              <Select value={status} onValueChange={(value) => value && setStatus(value)}>
+              <Select
+                value={status}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setStatus(value);
+                  setCurrentValues((current) => ({ ...current, status: value }));
+                }}
+              >
                 <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Active</SelectItem>
@@ -867,7 +1002,7 @@ function ModuleCategoryDialog({
           </div>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" className="rounded-xl" />}>Cancel</DialogClose>
-            <Button type="submit" className="rounded-xl" disabled={isPending}>
+            <Button type="submit" className="rounded-xl" disabled={isPending || hasFieldErrors(errors) || (isEditing ? !isDirty : !createReady)}>
               {isPending ? "Saving..." : isEditing ? "Save Changes" : "Add Category"}
             </Button>
           </DialogFooter>

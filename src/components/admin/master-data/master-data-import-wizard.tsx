@@ -173,6 +173,7 @@ export function MasterDataImportWizard() {
   const [isDragging, setIsDragging] = useState(false);
   const [result, setResult] = useState<MasterDataImportResult | null>(null);
   const [preview, setPreview] = useState<WorkbookPreview | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isParsingPreview, setIsParsingPreview] = useState(false);
   const [isDownloadingSample, setIsDownloadingSample] = useState(false);
@@ -206,13 +207,14 @@ export function MasterDataImportWizard() {
 
   async function selectFile(nextFile: File) {
     if (!isSpreadsheet(nextFile)) {
-      toast.error("Upload a valid Excel file (.xlsx or .xls).");
+      setFileError("Upload a valid Excel file (.xlsx or .xls).");
       return;
     }
 
     setFile(nextFile);
     setResult(null);
     setPreview(null);
+    setFileError(null);
     setPreviewError(null);
     setIsParsingPreview(true);
 
@@ -272,7 +274,10 @@ export function MasterDataImportWizard() {
   }
 
   async function handleImport() {
-    if (!file) return;
+    if (!file) {
+      setFileError("Choose an Excel file before importing.");
+      return;
+    }
 
     try {
       const response = await importMutation.mutateAsync(file);
@@ -281,6 +286,10 @@ export function MasterDataImportWizard() {
       }
 
       setResult(response.data);
+      setFile(null);
+      setPreview(null);
+      setPreviewError(null);
+      setFileError(null);
       toast.success("Master data imported");
     } catch (error) {
       showApiErrorToast(error, "Could not import master data");
@@ -367,6 +376,7 @@ export function MasterDataImportWizard() {
                       setFile(null);
                       setResult(null);
                       setPreview(null);
+                      setFileError(null);
                       setPreviewError(null);
                     }}
                   >
@@ -383,6 +393,10 @@ export function MasterDataImportWizard() {
                   </Button>
                 </div>
               </div>
+            ) : null}
+
+            {fileError ? (
+              <p className="text-sm font-medium text-destructive">{fileError}</p>
             ) : null}
 
             {isParsingPreview ? (

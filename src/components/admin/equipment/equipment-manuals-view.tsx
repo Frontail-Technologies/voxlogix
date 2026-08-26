@@ -16,6 +16,7 @@ import {
   StatusBadge,
 } from "@/components/common/dashboard-ui";
 import { DeleteConfirmDialog } from "@/components/common/delete-confirm-dialog";
+import { FormField } from "@/components/common/form-field";
 import { ResponsiveSearchControl } from "@/components/common/responsive-search-control";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,13 @@ import { useEquipmentManualsList } from "@/features/admin-equipment-manuals/api/
 import type { EquipmentManualListItem } from "@/features/admin-equipment-manuals/api/equipment-manual.types";
 import { showApiErrorToast } from "@/lib/api/error-toast";
 import { buildMultipartPayload } from "@/lib/api/multipart";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  type FieldErrors,
+} from "@/lib/forms/form-state";
 import { cn } from "@/lib/utils";
 
 export function EquipmentManualsView() {
@@ -116,6 +124,7 @@ function ManualForm({
   const [manualUrl, setManualUrl] = useState("");
   const [manualText, setManualText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const manualTitle = title.trim() || (selectedEquipment ? `${selectedEquipment.name} Manual` : "");
   const canSubmit = Boolean(selectedEquipmentId && manualTitle && (file || manualUrl.trim() || manualText.trim()));
   const selectedEquipmentLabel = selectedEquipment
@@ -124,6 +133,18 @@ function ManualForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
+    const nextErrors: FieldErrors = {};
+    if (!selectedEquipmentId) nextErrors.equipmentId = "Select equipment.";
+    if (!manualTitle) nextErrors.title = "Manual title is required.";
+    if (!file && !manualUrl.trim() && !manualText.trim()) {
+      nextErrors.manualSource = "Upload a PDF, add a manual URL, or paste context text.";
+    }
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
 
     try {
       await createMutation.mutateAsync(buildMultipartPayload({
@@ -137,6 +158,7 @@ function ManualForm({
       setManualUrl("");
       setManualText("");
       setFile(null);
+      setErrors({});
     } catch (error) {
       showApiErrorToast(error, "Could not save equipment manual");
     }
@@ -149,13 +171,17 @@ function ManualForm({
       </CardHeader>
       <CardContent className="px-4 pb-4 sm:px-5 sm:pb-5">
         <form className="grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
-          <Field label="Equipment">
+          <FormField label="Equipment" fieldName="equipmentId" error={errors.equipmentId}>
             {isEquipmentScoped ? (
               <div className="flex h-11 items-center rounded-xl border border-input bg-secondary/50 px-3 text-sm text-foreground">
                 {selectedEquipmentLabel}
               </div>
             ) : (
-              <Select value={selectedEquipmentId} onValueChange={(value) => value && onEquipmentChange(value)}>
+              <Select value={selectedEquipmentId} onValueChange={(value) => {
+                if (!value) return;
+                onEquipmentChange(value);
+                setErrors((current) => clearFieldError(current, "equipmentId"));
+              }}>
                 <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
                   <span className={cn("truncate text-sm", !selectedEquipment && "text-muted-foreground")}>
                     {selectedEquipmentLabel}
@@ -170,46 +196,62 @@ function ManualForm({
                 </SelectContent>
               </Select>
             )}
-          </Field>
+          </FormField>
 
-          <Field label="Manual Title">
+          <FormField label="Manual Title" fieldName="title" error={errors.title}>
             <Input
+              name="title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                setErrors((current) => clearFieldError(current, "title"));
+              }}
               placeholder={selectedEquipment ? `${selectedEquipment.name} Manual` : "Equipment operator manual"}
               className="h-11 rounded-xl bg-secondary/70"
+              aria-invalid={Boolean(errors.title)}
             />
-          </Field>
+          </FormField>
 
-          <Field label="Manual URL" className="lg:col-span-2">
+          <FormField label="Manual URL" className="lg:col-span-2" fieldName="manualSource" error={errors.manualSource}>
             <Input
+              name="manualSource"
               value={manualUrl}
-              onChange={(event) => setManualUrl(event.target.value)}
+              onChange={(event) => {
+                setManualUrl(event.target.value);
+                setErrors((current) => clearFieldError(current, "manualSource"));
+              }}
               placeholder="https://..."
               className="h-11 rounded-xl bg-secondary/70"
+              aria-invalid={Boolean(errors.manualSource)}
             />
-          </Field>
+          </FormField>
 
           <div className="lg:col-span-2">
             <DocumentUploadPanel
               title="PDF Manual"
               subtitle="Upload a source PDF. Context is prepared in the background if no text is pasted below."
               value={file}
-              onChange={setFile}
+              onChange={(nextFile) => {
+                setFile(nextFile);
+                setErrors((current) => clearFieldError(current, "manualSource"));
+              }}
             />
           </div>
 
           <Field label="Manual Context" className="lg:col-span-2">
             <Textarea
               value={manualText}
-              onChange={(event) => setManualText(event.target.value)}
+              onChange={(event) => {
+                setManualText(event.target.value);
+                setErrors((current) => clearFieldError(current, "manualSource"));
+              }}
               placeholder="Optional: paste extracted manual text for best AI answers. If empty, a background context seed will be created from the stored manual reference."
               className="min-h-36 rounded-xl bg-secondary/70 leading-6"
             />
           </Field>
 
           <div className="flex flex-wrap items-center gap-2 lg:col-span-2">
-            <Button type="submit" className="h-10 rounded-xl" disabled={!canSubmit || createMutation.isPending}>
+            <Button type="submit" className="h-10 rounded-xl" disabled={!canSubmit || createMutation.isPending || hasFieldErrors(errors)}>
               <AppIcon name="plus" className="size-4" />
               {createMutation.isPending ? "Saving..." : "Save Manual"}
             </Button>

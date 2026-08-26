@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppIcon } from "@/components/common/app-icon";
+import { FormField } from "@/components/common/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,13 @@ import {
   useVerifyResetOtp,
 } from "@/features/auth/api/auth.mutations";
 import { showApiErrorToast } from "@/lib/api/error-toast";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  type FieldErrors,
+} from "@/lib/forms/form-state";
 
 type Step = "identifier" | "otp" | "password" | "done";
 
@@ -24,6 +32,9 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("identifier");
   const [identifier, setIdentifier] = useState("");
   const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<FieldErrors>({});
 
   const forgotPasswordMutation = useForgotPassword();
   const verifyOtpMutation = useVerifyResetOtp();
@@ -66,18 +77,26 @@ export default function ForgotPasswordPage() {
 
   async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const newPassword = String(formData.get("newPassword") ?? "");
-    const confirmPassword = String(formData.get("confirmPassword") ?? "");
-
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
+    blurActiveElement();
+    const nextErrors: FieldErrors = {};
+    if (newPassword.trim().length < 8) nextErrors.newPassword = "Password must be at least 8 characters.";
+    if (confirmPassword.trim().length < 8) {
+      nextErrors.confirmPassword = "Confirm password must be at least 8 characters.";
+    } else if (newPassword !== confirmPassword) {
+      nextErrors.confirmPassword = "Passwords do not match.";
+    }
+    if (hasFieldErrors(nextErrors)) {
+      setPasswordErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
       return;
     }
 
     try {
       await resetPasswordMutation.mutateAsync({ identifier, otp: otp.trim(), newPassword, confirmPassword });
       setStep("done");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordErrors({});
     } catch (error) {
       showApiErrorToast(error, "Could not reset password");
     }
@@ -88,13 +107,13 @@ export default function ForgotPasswordPage() {
       <div className="absolute inset-x-0 bottom-0 h-64 bg-[radial-gradient(circle_at_50%_100%,color-mix(in_oklch,var(--primary),transparent_72%),transparent_58%)] blur-2xl dark:h-80 dark:bg-[radial-gradient(circle_at_50%_100%,color-mix(in_oklch,var(--primary),transparent_45%),transparent_60%)]" />
       <Card className="relative w-full max-w-md rounded-3xl border-border bg-card/92 shadow-xl shadow-foreground/5 backdrop-blur">
         <CardHeader className="items-center justify-center pb-3 text-center">
-          <div className="relative h-28 w-72 max-w-full">
+          <div className="relative h-28 w-32 max-w-full">
             <Image
               src="/images/logo-dark.png"
               alt={APP_NAME}
               fill
               priority
-              sizes="288px"
+              sizes="128px"
               className="object-contain dark:hidden"
             />
             <Image
@@ -102,7 +121,7 @@ export default function ForgotPasswordPage() {
               alt={APP_NAME}
               fill
               priority
-              sizes="288px"
+              sizes="128px"
               className="hidden object-contain dark:block"
             />
           </div>
@@ -177,15 +196,37 @@ export default function ForgotPasswordPage() {
                 <h1 className="text-lg font-semibold text-foreground">Set New Password</h1>
                 <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New password</Label>
-                <Input id="newPassword" name="newPassword" type="password" minLength={6} className="h-11 rounded-xl bg-secondary/70" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
-                <Input id="confirmPassword" name="confirmPassword" type="password" minLength={6} className="h-11 rounded-xl bg-secondary/70" required />
-              </div>
-              <Button type="submit" className="h-11 w-full rounded-xl" disabled={resetPasswordMutation.isPending}>
+              <FormField label="New password" fieldName="newPassword" error={passwordErrors.newPassword}>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  minLength={8}
+                  value={newPassword}
+                  onChange={(event) => {
+                    setNewPassword(event.target.value);
+                    setPasswordErrors((current) => clearFieldError(current, "newPassword"));
+                  }}
+                  className="h-11 rounded-xl bg-secondary/70"
+                  aria-invalid={Boolean(passwordErrors.newPassword)}
+                />
+              </FormField>
+              <FormField label="Confirm password" fieldName="confirmPassword" error={passwordErrors.confirmPassword}>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value);
+                    setPasswordErrors((current) => clearFieldError(current, "confirmPassword"));
+                  }}
+                  className="h-11 rounded-xl bg-secondary/70"
+                  aria-invalid={Boolean(passwordErrors.confirmPassword)}
+                />
+              </FormField>
+              <Button type="submit" className="h-11 w-full rounded-xl" disabled={resetPasswordMutation.isPending || newPassword.length < 8 || confirmPassword.length < 8 || newPassword !== confirmPassword || hasFieldErrors(passwordErrors)}>
                 {resetPasswordMutation.isPending ? "Saving..." : "Reset Password"}
               </Button>
             </form>

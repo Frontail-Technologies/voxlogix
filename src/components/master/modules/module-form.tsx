@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import { AppIcon, type AppIconName } from "@/components/common/app-icon";
 import { AssetUploadPanel } from "@/components/common/asset-upload-panel";
 import { DashboardCard } from "@/components/common/dashboard-ui";
 import { FormActionBar } from "@/components/common/form-action-bar";
+import { FormField as Field } from "@/components/common/form-field";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,17 @@ import { useActiveModuleTypesOptions } from "@/features/master-module-types/api/
 import type { ImageAssetValue } from "@/features/uploads/api/upload.types";
 import { isPendingImageAsset } from "@/features/uploads/api/upload.types";
 import { buildMultipartPayload } from "@/lib/api/multipart";
+import {
+  blurActiveElement,
+  clearFieldError,
+  focusFirstError,
+  hasFieldErrors,
+  isFormDirty,
+  readFormValues,
+  validateRequiredFields,
+  type FieldErrors,
+  type FormValues,
+} from "@/lib/forms/form-state";
 import { cn } from "@/lib/utils";
 
 type ModuleFormProps = { mode: "create" | "edit"; moduleId?: string; values?: ModuleDetail };
@@ -80,10 +92,12 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
   const isEdit = mode === "edit";
   const createMutation = useCreateModule();
   const updateMutation = useUpdateModule(moduleId ?? "");
+  const formRef = useRef<HTMLFormElement>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const moduleTypesQuery = useActiveModuleTypesOptions();
   const moduleCategoriesQuery = useActiveModuleCategoriesOptions();
-  const moduleTypeOptions = moduleTypesQuery.data?.data ?? [];
-  const moduleCategoryOptions = moduleCategoriesQuery.data?.data ?? [];
+  const moduleTypeOptions = useMemo(() => moduleTypesQuery.data?.data ?? [], [moduleTypesQuery.data?.data]);
+  const moduleCategoryOptions = useMemo(() => moduleCategoriesQuery.data?.data ?? [], [moduleCategoriesQuery.data?.data]);
   const selectedCategory = values?.category ?? moduleCategoryOptions[0]?.name ?? "Operational";
   const [selectedIcon, setSelectedIcon] = useState<AppIconName>(moduleIcon(values?.icon) ?? "modules");
   const [mediaAsset, setMediaAsset] = useState<ImageAssetValue | null>(() => values?.mediaUrl ? { provider: "cloudinary", key: values.mediaKey ?? values.mediaUrl, url: values.mediaUrl, secureUrl: values.mediaUrl, mimeType: "image/*", bytes: 0 } : null);
@@ -97,21 +111,76 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
   });
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const uploadFileName = useMemo(() => values?.name?.trim().toLowerCase().replace(/\s+/g, "-") ?? "module-media", [values?.name]);
+  const initialValues = useMemo<FormValues>(() => ({
+    name: values?.name ?? "",
+    moduleTypeId: values?.moduleTypeId ?? moduleTypeOptions[0]?.id ?? "",
+    category: selectedCategory,
+    status: values?.status ?? "INACTIVE",
+    availabilityText: values?.availabilityText ?? "Available to all companies",
+    color: values?.color ?? "#f7b51e",
+    description: values?.description ?? "",
+    promptPreview: values?.promptPreview ?? "",
+    selectedIcon: moduleIcon(values?.icon) ?? "modules",
+    mediaKey: values?.mediaKey ?? values?.mediaUrl ?? "",
+    behavior: {
+      voiceEnabled: values?.voiceEnabled ?? true,
+      feedEnabled: values?.feedEnabled ?? true,
+      feedOnlyOnAlert: values?.feedOnlyOnAlert ?? false,
+      requiresVoicePlayback: values?.requiresVoicePlayback ?? true,
+      maxAttachments: values?.maxAttachments ?? 5,
+    },
+    fields: mapFields(values?.fields ?? []).map(normalizeLocalField),
+  }), [moduleTypeOptions, selectedCategory, values?.availabilityText, values?.color, values?.description, values?.feedEnabled, values?.feedOnlyOnAlert, values?.fields, values?.icon, values?.maxAttachments, values?.mediaKey, values?.mediaUrl, values?.moduleTypeId, values?.name, values?.promptPreview, values?.requiresVoicePlayback, values?.status, values?.voiceEnabled]);
+  const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
+  const isDirty = !isEdit || isFormDirty(initialValues, currentValues);
+  const createReady = Boolean(currentValues.name)
+    && Boolean(currentValues.moduleTypeId)
+    && Boolean(currentValues.category)
+    && Boolean(currentValues.availabilityText);
+  const submitDisabled = !isDirty || !createReady || hasFieldErrors(errors);
+
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    const fieldName = (event.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).name;
+    if (fieldName) setErrors((current) => clearFieldError(current, fieldName));
+    setCurrentValues(readFormValues(event.currentTarget, {
+      selectedIcon,
+      mediaKey: moduleMediaKey(mediaAsset, values),
+      behavior,
+      fields: fields.map(normalizeLocalField),
+    }));
+  }
+
+  function updateBehavior(patch: Partial<typeof behavior>) {
+    setBehavior((current) => {
+      const nextBehavior = { ...current, ...patch };
+      setCurrentValues((snapshot) => ({ ...snapshot, behavior: nextBehavior }));
+      return nextBehavior;
+    });
+  }
 
 
   function addField() {
-    setFields((current) => [...current, { label: "", key: "", type: "Text", required: false, aiExtract: true, sourceType: "ai", sourceKey: null, feedVisible: true, reportVisible: true, sortOrder: current.length + 1 }]);
+    setFields((current) => {
+      const nextField: LocalField = { label: "", key: "", type: "Text", required: false, aiExtract: true, sourceType: "ai", sourceKey: null, feedVisible: true, reportVisible: true, sortOrder: current.length + 1 };
+      const nextFields = [...current, nextField];
+      setCurrentValues((snapshot) => ({ ...snapshot, fields: nextFields.map(normalizeLocalField) }));
+      return nextFields;
+    });
   }
 
   function updateLocalField(index: number, patch: Partial<LocalField>) {
-    setFields((current) => current.map((field, fieldIndex) => {
+    setFields((current) => {
+      const nextFields = current.map((field, fieldIndex) => {
       if (fieldIndex !== index) return field;
       const next = { ...field, ...patch };
       if (patch.label !== undefined && (field.key === "" || field.key === toFieldKey(field.label))) {
         next.key = toFieldKey(patch.label);
       }
       return next;
-    }));
+      });
+      setCurrentValues((snapshot) => ({ ...snapshot, fields: nextFields.map(normalizeLocalField) }));
+      return nextFields;
+    });
   }
 
   async function removeField(index: number) {
@@ -125,12 +194,28 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
         return;
       }
     }
-    setFields((current) => current.filter((_, fieldIndex) => fieldIndex !== index).map((item, itemIndex) => ({ ...item, sortOrder: itemIndex + 1 })));
+    setFields((current) => {
+      const nextFields = current.filter((_, fieldIndex) => fieldIndex !== index).map((item, itemIndex) => ({ ...item, sortOrder: itemIndex + 1 }));
+      setCurrentValues((snapshot) => ({ ...snapshot, fields: nextFields.map(normalizeLocalField) }));
+      return nextFields;
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    blurActiveElement();
     const formData = new FormData(event.currentTarget);
+    const nextErrors = validateRequiredFields(readFormValues(event.currentTarget), [
+      { key: "name", label: "Module name" },
+      { key: "moduleTypeId", label: "Module type" },
+      { key: "category", label: "Category" },
+      { key: "availabilityText", label: "Availability text" },
+    ]);
+    if (hasFieldErrors(nextErrors)) {
+      setErrors(nextErrors);
+      focusFirstError(event.currentTarget, nextErrors);
+      return;
+    }
     const payload = {
       name: stringValue(formData, "name"),
       moduleTypeId: stringValue(formData, "moduleTypeId"),
@@ -164,25 +249,25 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
   }
 
   return (
-    <form className="space-y-4 pb-36 sm:space-y-6" onSubmit={handleSubmit}>
+    <form ref={formRef} className="space-y-4 pb-36 sm:space-y-6" onSubmit={handleSubmit} onChange={handleFormChange} noValidate>
       <DashboardCard>
         <CardContent className="grid gap-4 p-4 sm:p-6 xl:grid-cols-2">
-          <div className="space-y-2 xl:col-span-2"><Label>Module Media</Label><AssetUploadPanel title={values?.name ?? "Module media"} buttonLabel="Choose Media" folder="modules" context="module-media" fileName={uploadFileName} previewType="image" value={mediaAsset} onChange={setMediaAsset} /></div>
-          <Field label="Module Name"><Input name="name" defaultValue={values?.name} placeholder="Equipment Log" className="h-11 rounded-xl bg-secondary/70" required /></Field>
-          <Field label="Module Type"><Select name="moduleTypeId" defaultValue={values?.moduleTypeId ?? moduleTypeOptions[0]?.id}><SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger><SelectContent>{moduleTypeOptions.map((moduleType) => <SelectItem key={moduleType.id} value={moduleType.id}>{label(moduleType.name)}</SelectItem>)}</SelectContent></Select></Field>
-          <Field label="Category"><Select name="category" defaultValue={selectedCategory}><SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{moduleCategoryOptions.some((category) => category.name === selectedCategory) ? null : <SelectItem value={selectedCategory}>{selectedCategory}</SelectItem>}{moduleCategoryOptions.map((category) => <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>)}</SelectContent></Select></Field>
+          <div className="space-y-2 xl:col-span-2"><Label>Module Media</Label><AssetUploadPanel title={values?.name ?? "Module media"} buttonLabel="Choose Media" folder="modules" context="module-media" fileName={uploadFileName} previewType="image" value={mediaAsset} onChange={(asset) => { setMediaAsset(asset); setCurrentValues((snapshot) => ({ ...snapshot, mediaKey: moduleMediaKey(asset, values) })); }} /></div>
+          <Field label="Module Name" fieldName="name" error={errors.name}><Input name="name" defaultValue={values?.name} placeholder="Equipment Log" className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.name)} /></Field>
+          <Field label="Module Type" fieldName="moduleTypeId" error={errors.moduleTypeId}><Select name="moduleTypeId" defaultValue={values?.moduleTypeId ?? moduleTypeOptions[0]?.id}><SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.moduleTypeId)}><SelectValue /></SelectTrigger><SelectContent>{moduleTypeOptions.map((moduleType) => <SelectItem key={moduleType.id} value={moduleType.id}>{label(moduleType.name)}</SelectItem>)}</SelectContent></Select></Field>
+          <Field label="Category" fieldName="category" error={errors.category}><Select name="category" defaultValue={selectedCategory}><SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.category)}><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{moduleCategoryOptions.some((category) => category.name === selectedCategory) ? null : <SelectItem value={selectedCategory}>{selectedCategory}</SelectItem>}{moduleCategoryOptions.map((category) => <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>)}</SelectContent></Select></Field>
           <Field label="Status"><Select name="status" defaultValue={values?.status ?? "INACTIVE"}><SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70"><SelectValue /></SelectTrigger><SelectContent>{moduleStatuses.map((status) => <SelectItem key={status} value={status}>{label(status)}</SelectItem>)}</SelectContent></Select></Field>
-          <Field label="Availability Text"><Input name="availabilityText" defaultValue={values?.availabilityText ?? "Available to all companies"} placeholder="Available to all companies" className="h-11 rounded-xl bg-secondary/70" required /></Field>
+          <Field label="Availability Text" fieldName="availabilityText" error={errors.availabilityText}><Input name="availabilityText" defaultValue={values?.availabilityText ?? "Available to all companies"} placeholder="Available to all companies" className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.availabilityText)} /></Field>
           <Field label="Module Color"><div className="flex h-11 items-center gap-3 rounded-xl border border-input bg-secondary/70 px-3"><Input name="color" type="color" defaultValue={values?.color ?? "#f7b51e"} className="size-7 rounded-md border-0 bg-transparent p-0" /><span className="text-sm text-muted-foreground">{values?.color ?? "#f7b51e"}</span></div></Field>
-          <div className="space-y-2 xl:col-span-2"><Label>Module Icon</Label><div className="flex flex-wrap gap-2">{moduleIconOptions.map((option) => { const active = selectedIcon === option.value; return <button key={option.value} type="button" aria-pressed={active} onClick={() => setSelectedIcon(option.value)} className={cn("flex h-11 min-w-[9.5rem] items-center gap-2 rounded-lg border border-border bg-secondary/70 px-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-primary/8 sm:min-w-[11rem]", active && "border-primary bg-primary/12 text-primary shadow-sm ring-1 ring-primary/30")}><span className={cn("flex size-7 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground", active && "bg-primary text-primary-foreground")}><AppIcon name={option.value} className="size-4" /></span><span className="min-w-0 flex-1 truncate font-medium">{option.label}</span>{active ? <AppIcon name="status" className="size-4 shrink-0 text-primary" /> : null}</button>; })}</div></div>
+          <div className="space-y-2 xl:col-span-2"><Label>Module Icon</Label><div className="flex flex-wrap gap-2">{moduleIconOptions.map((option) => { const active = selectedIcon === option.value; return <button key={option.value} type="button" aria-pressed={active} onClick={() => { setSelectedIcon(option.value); setCurrentValues((snapshot) => ({ ...snapshot, selectedIcon: option.value })); }} className={cn("flex h-11 min-w-[9.5rem] items-center gap-2 rounded-lg border border-border bg-secondary/70 px-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-primary/8 sm:min-w-[11rem]", active && "border-primary bg-primary/12 text-primary shadow-sm ring-1 ring-primary/30")}><span className={cn("flex size-7 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground", active && "bg-primary text-primary-foreground")}><AppIcon name={option.value} className="size-4" /></span><span className="min-w-0 flex-1 truncate font-medium">{option.label}</span>{active ? <AppIcon name="status" className="size-4 shrink-0 text-primary" /> : null}</button>; })}</div></div>
           <Field label="Description" className="xl:col-span-2"><Textarea name="description" defaultValue={values?.description ?? undefined} placeholder="Describe the module purpose..." className="min-h-24 rounded-xl bg-secondary/70" /></Field>
           <div className="space-y-3 xl:col-span-2">
             <Label>Module Behavior</Label>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <BehaviorToggle label="Voice Input" checked={behavior.voiceEnabled} onChange={(checked) => setBehavior((current) => ({ ...current, voiceEnabled: checked }))} />
-              <BehaviorToggle label="Show In Feed" checked={behavior.feedEnabled} onChange={(checked) => setBehavior((current) => ({ ...current, feedEnabled: checked }))} />
-              <BehaviorToggle label="Alert Feed Only" checked={behavior.feedOnlyOnAlert} onChange={(checked) => setBehavior((current) => ({ ...current, feedOnlyOnAlert: checked }))} />
-              <BehaviorToggle label="Voice Playback" checked={behavior.requiresVoicePlayback} onChange={(checked) => setBehavior((current) => ({ ...current, requiresVoicePlayback: checked }))} />
+              <BehaviorToggle label="Voice Input" checked={behavior.voiceEnabled} onChange={(checked) => updateBehavior({ voiceEnabled: checked })} />
+              <BehaviorToggle label="Show In Feed" checked={behavior.feedEnabled} onChange={(checked) => updateBehavior({ feedEnabled: checked })} />
+              <BehaviorToggle label="Alert Feed Only" checked={behavior.feedOnlyOnAlert} onChange={(checked) => updateBehavior({ feedOnlyOnAlert: checked })} />
+              <BehaviorToggle label="Voice Playback" checked={behavior.requiresVoicePlayback} onChange={(checked) => updateBehavior({ requiresVoicePlayback: checked })} />
               <div className="rounded-xl border border-border bg-secondary/50 p-3">
                 <Label className="text-xs text-muted-foreground">Max Attachments</Label>
                 <Input
@@ -190,7 +275,7 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
                   min={0}
                   max={20}
                   value={behavior.maxAttachments}
-                  onChange={(event) => setBehavior((current) => ({ ...current, maxAttachments: Number(event.target.value) || 0 }))}
+                  onChange={(event) => updateBehavior({ maxAttachments: Number(event.target.value) || 0 })}
                   className="mt-2 h-9 rounded-lg bg-background"
                 />
               </div>
@@ -200,7 +285,7 @@ export function ModuleForm({ mode, moduleId, values }: ModuleFormProps) {
       </DashboardCard>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_360px]"><ModuleFieldsBuilder fields={fields} onAdd={addField} onRemove={removeField} onChange={updateLocalField} /><ModulePromptPreview defaultValue={values?.promptPreview} /></div>
-      <FormActionBar cancelHref="/master/modules" submitLabel={isEdit ? "Update Module" : "Create Module"} submitIcon={isEdit ? "settings" : "plus"} isSubmitting={isSubmitting} />
+      <FormActionBar cancelHref="/master/modules" submitLabel={isEdit ? "Update Module" : "Create Module"} submitIcon={isEdit ? "settings" : "plus"} isSubmitting={isSubmitting} submitDisabled={submitDisabled} />
     </form>
   );
 }
@@ -328,8 +413,8 @@ function BehaviorToggle({ label: toggleLabel, checked, onChange }: { label: stri
   );
 }
 
-function Field({ label: fieldLabel, children, className }: { label: string; children: ReactNode; className?: string }) { return <div className={cn("space-y-2", className)}><Label>{fieldLabel}</Label>{children}</div>; }
 function mapFields(fields: ModuleField[]): LocalField[] { return fields.map((field) => ({ id: field.id, label: field.label, key: field.key, type: field.type, required: field.required, aiExtract: field.aiExtract, sourceType: field.sourceType ?? "ai", sourceKey: field.sourceKey ?? null, feedVisible: field.feedVisible ?? true, reportVisible: field.reportVisible ?? true, validationRules: field.validationRules ?? null, sortOrder: field.sortOrder, options: field.options ?? undefined })); }
+function normalizeLocalField(field: LocalField) { return { label: field.label, key: field.key, type: field.type, required: field.required, aiExtract: field.aiExtract, sourceType: field.sourceType, sourceKey: field.sourceKey, feedVisible: field.feedVisible, reportVisible: field.reportVisible, sortOrder: field.sortOrder, options: field.options ?? [], validationRules: field.validationRules ? JSON.stringify(field.validationRules) : "" }; }
 function toFieldPayload(field: LocalField): CreateModuleFieldPayload { return { label: field.label, key: field.key, type: field.type, required: field.required, aiExtract: field.aiExtract, sourceType: field.sourceType, sourceKey: field.sourceType === "master" ? field.sourceKey : null, feedVisible: field.feedVisible, reportVisible: field.reportVisible, validationRules: field.validationRules ?? null, sortOrder: field.sortOrder, options: field.options }; }
 function stringValue(formData: FormData, key: string) { return String(formData.get(key) ?? "").trim(); }
 function optionalValue(formData: FormData, key: string) { const value = stringValue(formData, key); return value || null; }
@@ -343,3 +428,8 @@ function toFieldKey(value: string): string {
   }).join("");
 }
 function moduleIcon(icon?: string | null): AppIconName | null { return (icon === "clipboard-text" ? "logs" : icon === "warning-circle" ? "warning" : icon === "gauge" ? "status" : icon === "clock-countdown" ? "activity" : icon === "sparkle" ? "ai" : icon === "git-branch" ? "modules" : icon ?? null) as AppIconName | null; }
+function moduleMediaKey(asset: ImageAssetValue | null, values?: ModuleDetail) {
+  return isPendingImageAsset(asset)
+    ? values?.mediaKey ?? values?.mediaUrl ?? ""
+    : asset?.key ?? asset?.secureUrl ?? asset?.url ?? "";
+}
