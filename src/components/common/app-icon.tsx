@@ -3,6 +3,8 @@
 import {
   Activity,
   ArrowLeft,
+  ArrowRight,
+  ArrowsClockwise,
   ArchiveBox,
   Bell,
   Buildings,
@@ -24,15 +26,21 @@ import {
   GearSix,
   Gauge,
   ImageSquare,
+  Lightbulb,
   ListChecks,
   LockKey,
   MagnifyingGlass,
   ListDashes,
   Microphone,
+  Moon,
   Package,
+  Phone,
   Planet,
   Plus,
+  QrCode,
   RocketLaunch,
+  Ruler,
+  ShieldWarning,
   Sparkle,
   SpeakerHigh,
   SquaresFour,
@@ -51,10 +59,12 @@ import {
 export type AppIconName =
   | "activity"
   | "arrow-left"
+  | "arrow-right"
   | "admins"
   | "ai"
   | "billing"
   | "calendar"
+  | "call"
   | "caret-down"
   | "caret-left"
   | "caret-right"
@@ -67,9 +77,13 @@ export type AppIconName =
   | "eye-off"
   | "equipment"
   | "filter"
+  | "kaizen"
   | "logs"
+  | "measuring"
+  | "meter"
   | "more"
   | "modules"
+  | "moon"
   | "notifications"
   | "package"
   | "permissions"
@@ -77,9 +91,12 @@ export type AppIconName =
   | "plus"
   | "planning"
   | "profile"
+  | "qr"
   | "reports"
   | "rocket"
+  | "safety"
   | "search"
+  | "shift"
   | "sign-out"
   | "sidebar"
   | "settings"
@@ -98,10 +115,12 @@ export type AppIconName =
 const iconMap = {
   activity: Activity,
   "arrow-left": ArrowLeft,
+  "arrow-right": ArrowRight,
   admins: UserGear,
   ai: Sparkle,
   billing: CreditCard,
   calendar: CalendarBlank,
+  call: Phone,
   "caret-down": CaretDown,
   "caret-left": CaretLeft,
   "caret-right": CaretRight,
@@ -114,9 +133,13 @@ const iconMap = {
   "eye-off": EyeSlash,
   equipment: Wrench,
   filter: Funnel,
+  kaizen: Lightbulb,
   logs: ClipboardText,
+  measuring: Ruler,
+  meter: Gauge,
   more: DotsThreeVertical,
   modules: SquaresFour,
+  moon: Moon,
   notifications: Bell,
   image: ImageSquare,
   package: Package,
@@ -125,9 +148,12 @@ const iconMap = {
   plus: Plus,
   planning: ListChecks,
   profile: UserCircle,
+  qr: QrCode,
   reports: ChartBar,
   rocket: RocketLaunch,
+  safety: ShieldWarning,
   search: MagnifyingGlass,
+  shift: ArrowsClockwise,
   "sign-out": ArrowLeft,
   sidebar: ListDashes,
   settings: GearSix,
