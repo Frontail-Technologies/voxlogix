@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { importedMasterDataKeys } from "@/features/imported-master-data/api/imported-master-data.keys";
-import type { ImportedMasterDataItem, ImportedMasterDataListParams, ImportedMasterDataSource, PaginationMeta } from "@/features/imported-master-data/api/imported-master-data.types";
+import type {
+  ImportedMasterDataItem,
+  ImportedMasterDataListParams,
+  ImportedMasterDataSource,
+  MeasuringPointReadingHistoryItem,
+  MeterCounterReadingHistoryItem,
+  PaginationMeta,
+} from "@/features/imported-master-data/api/imported-master-data.types";
 import { apiRequest } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/api/endpoints";
 import { listQueryOptions } from "@/lib/api/query-options";
@@ -30,6 +37,23 @@ export function useImportedMasterData(source: ImportedMasterDataSource, params: 
   return useQuery({
     queryKey: importedMasterDataKeys.list(source, params),
     queryFn: () => getImportedMasterData(source, params),
+    ...listQueryOptions,
+  });
+}
+
+const readingHistorySourceEndpoints = {
+  measuringPoints: apiEndpoints.importedMasterData.measuringPoints,
+  meterCounters: apiEndpoints.importedMasterData.meterCounters,
+} as const;
+
+export function useReadingHistory<T extends MeasuringPointReadingHistoryItem | MeterCounterReadingHistoryItem>(
+  source: "measuringPoints" | "meterCounters",
+  id: string | null,
+) {
+  return useQuery({
+    queryKey: importedMasterDataKeys.readingHistory(source, id ?? ""),
+    queryFn: () => apiRequest<T[], PaginationMeta>(`${readingHistorySourceEndpoints[source]}/${id}/readings?limit=30`),
+    enabled: Boolean(id),
     ...listQueryOptions,
   });
 }

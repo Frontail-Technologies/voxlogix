@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { AppIcon, type AppIconName } from "@/components/common/app-icon";
 import {
@@ -16,19 +17,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/common/dashboard-ui";
+import { DeleteConfirmDialog } from "@/components/common/delete-confirm-dialog";
 import { ResponsiveSearchControl } from "@/components/common/responsive-search-control";
 import { TablePagination } from "@/components/common/table-pagination";
 import { MasterTableSkeleton } from "@/components/master/master-skeletons";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useDeleteImportedMasterData } from "@/features/imported-master-data/api/imported-master-data.mutations";
 import { useImportedMasterData } from "@/features/imported-master-data/api/imported-master-data.queries";
 import type {
   ImportedMasterDataItem,
   ImportedMasterDataSource,
+  LatestReadingSummary,
   PaginationMeta,
 } from "@/features/imported-master-data/api/imported-master-data.types";
 import { formatMasterDataDate, masterDataLabel, masterDataStatuses } from "@/features/admin-master-data/master-data.presentation";
 import { QrLabelDialog } from "@/components/admin/master-data/qr-label-dialog";
+import { ImportedMasterDataEditDialog } from "@/components/admin/master-data/imported-master-data-edit-dialog";
+import { ImportedMasterDataHistoryDialog } from "@/components/admin/master-data/imported-master-data-history-dialog";
+import { showApiErrorToast } from "@/lib/api/error-toast";
 
 const sourceConfigs: Record<
   ImportedMasterDataSource,
@@ -39,6 +46,7 @@ const sourceConfigs: Record<
     searchPlaceholder: string;
     emptyText: string;
     columns: Array<{ label: string; getValue: (item: ImportedMasterDataItem) => string | number | null | undefined }>;
+    getUnit?: (item: ImportedMasterDataItem) => string | null | undefined;
   }
 > = {
   safetyReporting: {
@@ -68,6 +76,7 @@ const sourceConfigs: Record<
       { label: "Lower", getValue: (item) => "lowerLimit" in item ? item.lowerLimit : null },
       { label: "Upper", getValue: (item) => "upperLimit" in item ? item.upperLimit : null },
     ],
+    getUnit: (item) => "measurementUnit" in item ? item.measurementUnit : null,
   },
   meterCounters: {
     title: "Meter Counters",
@@ -82,6 +91,7 @@ const sourceConfigs: Record<
       { label: "Expected", getValue: (item) => "expectedDailyConsumption" in item ? item.expectedDailyConsumption : null },
       { label: "Deviation %", getValue: (item) => "alertDeviationPct" in item ? item.alertDeviationPct : null },
     ],
+    getUnit: (item) => "counterUnit" in item ? item.counterUnit : null,
   },
   kaizen: {
     title: "Kaizen",
@@ -114,9 +124,23 @@ export function ImportedMasterDataList({ source }: { source: ImportedMasterDataS
   });
   const rows = data?.data ?? [];
   const meta = data?.meta;
-  const hasQrAction = source === "measuringPoints" || source === "meterCounters";
+  const hasReadingData = source === "measuringPoints" || source === "meterCounters";
   const [qrItem, setQrItem] = useState<ImportedMasterDataItem | null>(null);
-  const columnCount = config.columns.length + (hasQrAction ? 3 : 2);
+  const [editItem, setEditItem] = useState<ImportedMasterDataItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<ImportedMasterDataItem | null>(null);
+  const [historyItem, setHistoryItem] = useState<ImportedMasterDataItem | null>(null);
+  const deleteMutation = useDeleteImportedMasterData(source);
+  const columnCount = config.columns.length + 3 + (hasReadingData ? 1 : 0);
+
+  async function handleDelete() {
+    if (!deleteItem) return;
+    try {
+      await deleteMutation.mutateAsync(deleteItem.id);
+      toast.success("Record deactivated");
+    } catch (error) {
+      showApiErrorToast(error, "Could not delete record");
+    }
+  }
 
   const subtitle = useMemo(() => {
     if (!meta) return config.description;
@@ -166,12 +190,37 @@ export function ImportedMasterDataList({ source }: { source: ImportedMasterDataS
               rows={rows}
               config={config}
               columnCount={columnCount}
-              hasQrAction={hasQrAction}
+              hasReadingData={hasReadingData}
               onQr={setQrItem}
+              onEdit={setEditItem}
+              onDelete={setDeleteItem}
+              onHistory={setHistoryItem}
             />
           ) : null}
         </DashboardCard>
       </div>
+      <ImportedMasterDataEditDialog
+        source={source}
+        item={editItem}
+        open={Boolean(editItem)}
+        onOpenChange={(open) => !open && setEditItem(null)}
+      />
+      {historyItem && (source === "measuringPoints" || source === "meterCounters") ? (
+        <ImportedMasterDataHistoryDialog
+          source={source}
+          item={historyItem}
+          open={Boolean(historyItem)}
+          onOpenChange={(open) => !open && setHistoryItem(null)}
+        />
+      ) : null}
+      <DeleteConfirmDialog
+        open={Boolean(deleteItem)}
+        onOpenChange={(open) => !open && setDeleteItem(null)}
+        title="Deactivate record?"
+        description="This marks the record Inactive and removes it from active lists. Historical readings and logs tied to it are kept, and it can be reactivated later by editing its status."
+        confirmLabel={deleteMutation.isPending ? "Deactivating..." : "Deactivate"}
+        onConfirm={() => void handleDelete()}
+      />
       {qrItem && "pointCode" in qrItem ? (
         <QrLabelDialog
           open={Boolean(qrItem)}
@@ -214,18 +263,42 @@ function ImportedDataPagination({ meta, page, onPageChange }: { meta: Pagination
   );
 }
 
+function LatestReadingCell({ reading, unit }: { reading: LatestReadingSummary | undefined; unit?: string | null }) {
+  if (!reading) {
+    return <span className="text-xs text-muted-foreground">No readings yet</span>;
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5">
+        <span className={`size-1.5 shrink-0 rounded-full ${reading.isAlert ? "bg-destructive" : "bg-emerald-500"}`} />
+        <span className="font-medium text-foreground">
+          {reading.value}
+          {unit ? <span className="ml-1 text-xs text-muted-foreground">{unit}</span> : null}
+        </span>
+      </div>
+      <span className="text-xs text-muted-foreground">{formatMasterDataDate(reading.reportedAt)}</span>
+    </div>
+  );
+}
+
 function ImportedDataTable({
   rows,
   config,
   columnCount,
-  hasQrAction,
+  hasReadingData,
   onQr,
+  onEdit,
+  onDelete,
+  onHistory,
 }: {
   rows: ImportedMasterDataItem[];
   config: (typeof sourceConfigs)[ImportedMasterDataSource];
   columnCount: number;
-  hasQrAction: boolean;
+  hasReadingData: boolean;
   onQr: (item: ImportedMasterDataItem) => void;
+  onEdit: (item: ImportedMasterDataItem) => void;
+  onDelete: (item: ImportedMasterDataItem) => void;
+  onHistory: (item: ImportedMasterDataItem) => void;
 }) {
   return (
     <Table className="[&_td]:py-3">
@@ -235,8 +308,9 @@ function ImportedDataTable({
           {config.columns.map((column) => (
             <TableHead key={column.label}>{column.label}</TableHead>
           ))}
+          {hasReadingData ? <TableHead>Latest Reading</TableHead> : null}
           <TableHead>Updated</TableHead>
-          {hasQrAction ? <TableHead className="text-right">Actions</TableHead> : null}
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -245,8 +319,11 @@ function ImportedDataTable({
             key={item.id}
             item={item}
             config={config}
-            hasQrAction={hasQrAction}
+            hasReadingData={hasReadingData}
             onQr={onQr}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onHistory={onHistory}
           />
         )) : (
           <TableRow>
@@ -261,15 +338,22 @@ function ImportedDataTable({
 function ImportedDataRow({
   item,
   config,
-  hasQrAction,
+  hasReadingData,
   onQr,
+  onEdit,
+  onDelete,
+  onHistory,
 }: {
   item: ImportedMasterDataItem;
   config: (typeof sourceConfigs)[ImportedMasterDataSource];
-  hasQrAction: boolean;
+  hasReadingData: boolean;
   onQr: (item: ImportedMasterDataItem) => void;
+  onEdit: (item: ImportedMasterDataItem) => void;
+  onDelete: (item: ImportedMasterDataItem) => void;
+  onHistory: (item: ImportedMasterDataItem) => void;
 }) {
   const title = "incidentCategory" in item ? item.incidentCategory : "measurementName" in item ? item.measurementName : "counterName" in item ? item.counterName : "category" in item ? item.category : "Imported record";
+  const latestReading = "latestReading" in item ? item.latestReading : undefined;
   return (
     <TableRow>
       <TableCell>
@@ -288,20 +372,44 @@ function ImportedDataRow({
           {formatCellValue(column.getValue(item))}
         </TableCell>
       ))}
+      {hasReadingData ? (
+        <TableCell>
+          <LatestReadingCell reading={latestReading} unit={config.getUnit?.(item)} />
+        </TableCell>
+      ) : null}
       <TableCell className="text-muted-foreground">
         <div className="flex items-center gap-2">
           <StatusBadge status={masterDataLabel(item.status)} />
           <span>{formatMasterDataDate(item.updatedAt)}</span>
         </div>
       </TableCell>
-      {hasQrAction ? (
-        <TableCell className="text-right">
-          <Button variant="outline" size="sm" onClick={() => onQr(item)}>
-            <QrCode className="size-3.5" />
-            QR
+      <TableCell className="text-right">
+        <div className="flex items-center justify-end gap-1.5">
+          {hasReadingData ? (
+            <Button variant="ghost" size="icon" className="size-8" aria-label="View reading history" onClick={() => onHistory(item)}>
+              <AppIcon name="reports" className="size-4" />
+            </Button>
+          ) : null}
+          {hasReadingData ? (
+            <Button variant="outline" size="sm" onClick={() => onQr(item)}>
+              <QrCode className="size-3.5" />
+              QR
+            </Button>
+          ) : null}
+          <Button variant="ghost" size="icon" className="size-8" aria-label="Edit record" onClick={() => onEdit(item)}>
+            <AppIcon name="settings" className="size-4" />
           </Button>
-        </TableCell>
-      ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-destructive hover:text-destructive"
+            aria-label="Delete record"
+            onClick={() => onDelete(item)}
+          >
+            <AppIcon name="trash" className="size-4" />
+          </Button>
+        </div>
+      </TableCell>
     </TableRow>
   );
 }

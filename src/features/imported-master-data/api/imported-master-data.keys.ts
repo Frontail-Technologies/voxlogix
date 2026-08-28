@@ -3,4 +3,5 @@ import type { ImportedMasterDataListParams, ImportedMasterDataSource } from "@/f
 export const importedMasterDataKeys = {
   all: ["imported-master-data"] as const,
   list: (source: ImportedMasterDataSource, params: ImportedMasterDataListParams) => [...importedMasterDataKeys.all, source, params] as const,
+  readingHistory: (source: "measuringPoints" | "meterCounters", id: string) => [...importedMasterDataKeys.all, source, id, "readings"] as const,
 };
