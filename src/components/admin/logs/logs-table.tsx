@@ -13,6 +13,7 @@ import {
 } from "@/components/common/dashboard-ui";
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { TruncatedText } from "@/components/common/truncated-text";
+import { Checkbox } from "@/components/ui/checkbox";
 import { prefetchAdminLogDetail } from "@/features/logs/api/log.queries";
 import type { AdminLogListItem } from "@/features/logs/api/log.types";
 import { prefetchEquipmentDetail } from "@/features/admin-equipment/api/equipment.queries";
@@ -24,12 +25,33 @@ import {
 import { LogActionsMenu } from "./log-actions-menu";
 import { LogStatusBadge, SeverityBadge } from "./log-badges";
 
-export function LogsTable({ logs }: { logs: AdminLogListItem[] }) {
+type LogsTableProps = {
+  logs: AdminLogListItem[];
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
+};
+
+export function LogsTable({ logs, selectedIds, onToggleSelect, onToggleSelectAll }: LogsTableProps) {
   const queryClient = useQueryClient();
+  const selectable = Boolean(selectedIds && onToggleSelect && onToggleSelectAll);
+  const allSelected = selectable && logs.length > 0 && logs.every((log) => selectedIds!.has(log.id));
+  const someSelected = selectable && !allSelected && logs.some((log) => selectedIds!.has(log.id));
+
   return (
     <Table className="[&_td]:py-3">
       <TableHeader>
         <TableRow>
+          {selectable ? (
+            <TableHead className="w-10">
+              <Checkbox
+                checked={allSelected}
+                indeterminate={someSelected}
+                onCheckedChange={() => onToggleSelectAll!()}
+                aria-label="Select all logs on this page"
+              />
+            </TableHead>
+          ) : null}
           <TableHead>Log</TableHead>
           <TableHead>Equipment</TableHead>
           <TableHead>Module</TableHead>
@@ -47,7 +69,16 @@ export function LogsTable({ logs }: { logs: AdminLogListItem[] }) {
             const equipment = log.equipment;
 
             return (
-            <TableRow key={log.id}>
+            <TableRow key={log.id} data-state={selectable && selectedIds!.has(log.id) ? "selected" : undefined}>
+              {selectable ? (
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds!.has(log.id)}
+                    onCheckedChange={() => onToggleSelect!(log.id)}
+                    aria-label={`Select ${log.logNumber}`}
+                  />
+                </TableCell>
+              ) : null}
               <TableCell className="max-w-64 whitespace-normal">
                 <Link href={`/admin/logs/${log.id}`} onMouseEnter={() => void prefetchAdminLogDetail(queryClient, log.id)} onFocus={() => void prefetchAdminLogDetail(queryClient, log.id)}>
                   <TruncatedText text={log.title} className="w-56 font-medium text-foreground" />
@@ -100,7 +131,7 @@ export function LogsTable({ logs }: { logs: AdminLogListItem[] }) {
           })
         ) : (
           <TableRow>
-            <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+            <TableCell colSpan={selectable ? 10 : 9} className="py-8 text-center text-muted-foreground">
               No logs found.
             </TableCell>
           </TableRow>

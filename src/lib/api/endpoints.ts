@@ -63,6 +63,7 @@ export const apiEndpoints = {
     attachments: (logId: string) => `/logs/${logId}/attachments`,
     attachmentById: (logId: string, attachmentId: string) =>
       `/logs/${logId}/attachments/${attachmentId}`,
+    bulkDelete: "/logs/bulk-delete",
   },
   reports: {
     kpiDashboard: "/reports/kpi-dashboard",

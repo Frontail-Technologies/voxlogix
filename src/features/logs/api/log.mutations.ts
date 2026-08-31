@@ -50,6 +50,19 @@ export function deleteLogAttachment(logId: string, attachmentId: string) {
   );
 }
 
+export function deleteLog(logId: string) {
+  return apiRequest<{ id: string }>(apiEndpoints.logs.byId(logId), {
+    method: "DELETE",
+  });
+}
+
+export function bulkDeleteLogs(ids: string[]) {
+  return apiRequest<{ ids: string[] }>(apiEndpoints.logs.bulkDelete, {
+    method: "POST",
+    body: { ids },
+  });
+}
+
 export function useCreateLog() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -71,6 +84,22 @@ export function useUpdateLogStatus(logId: string) {
   return useMutation({
     mutationFn: (payload: { status: string; notes?: string }) =>
       updateLogStatus(logId, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminLogKeys.all }),
+  });
+}
+
+export function useDeleteLog() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteLog,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminLogKeys.all }),
+  });
+}
+
+export function useBulkDeleteLogs() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkDeleteLogs,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: adminLogKeys.all }),
   });
 }

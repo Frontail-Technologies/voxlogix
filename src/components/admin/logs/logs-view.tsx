@@ -3,20 +3,24 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { AppIcon } from "@/components/common/app-icon";
 import {
   DashboardCard,
   DashboardPageHeader,
 } from "@/components/common/dashboard-ui";
+import { DeleteConfirmDialog } from "@/components/common/delete-confirm-dialog";
 import { TablePagination } from "@/components/common/table-pagination";
 import {
   LogsCardGridSkeleton,
   MasterCardGridSkeleton,
   MasterTableSkeleton,
 } from "@/components/master/master-skeletons";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { useBulkDeleteLogs } from "@/features/logs/api/log.mutations";
 import { useLogsList } from "@/features/logs/api/log.queries";
+import { showApiErrorToast } from "@/lib/api/error-toast";
 import { cn } from "@/lib/utils";
 
 import { LogsCards } from "./logs-cards";
@@ -29,6 +33,8 @@ export function LogsView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tableView, setTableView] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const page = Number(searchParams.get("page") ?? "1");
   const search = searchParams.get("search") ?? "";
   const status = searchParams.get("status") ?? "all";
@@ -44,6 +50,45 @@ export function LogsView() {
   });
   const logs = data?.data ?? [];
   const meta = data?.meta;
+  const bulkDeleteMutation = useBulkDeleteLogs();
+
+  // Selection is page/filter-scoped — a row selected on one page shouldn't silently carry
+  // into a different page or filter's results. Reset during render (React's "adjusting
+  // state on prop change" pattern) rather than in an effect, so it can't flash the stale
+  // selection for a frame before clearing.
+  const filterKey = `${page}|${search}|${status}|${moduleType}|${severity}`;
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) => {
+      const allSelected = logs.length > 0 && logs.every((log) => current.has(log.id));
+      return allSelected ? new Set() : new Set(logs.map((log) => log.id));
+    });
+  }
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      toast.success(`${ids.length} log${ids.length === 1 ? "" : "s"} deleted`);
+      setSelectedIds(new Set());
+    } catch (error) {
+      showApiErrorToast(error, "Could not delete the selected logs");
+    }
+  }
 
   function updateQuery(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -92,6 +137,22 @@ export function LogsView() {
           tableView={tableView}
           onTableViewChange={setTableView}
         />
+        {tableView && selectedIds.size > 0 ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-2.5">
+            <p className="text-sm font-medium text-foreground">
+              {selectedIds.size} selected
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                <AppIcon name="warning" className="size-4" />
+                Delete {selectedIds.size} logs
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {meta ? (
           <TablePagination
             page={meta.page}
@@ -117,9 +178,29 @@ export function LogsView() {
           </DashboardCard>
         ) : null}
         {!isLoading && !isError ? (
-          tableView ? <DashboardCard><LogsTable logs={logs} /></DashboardCard> : <LogsCards logs={logs} />
+          tableView ? (
+            <DashboardCard>
+              <LogsTable
+                logs={logs}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
+              />
+            </DashboardCard>
+          ) : (
+            <LogsCards logs={logs} />
+          )
         ) : null}
       </div>
+
+      <DeleteConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title={`Delete ${selectedIds.size} logs?`}
+        description="This action cannot be undone."
+        confirmLabel={bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedIds.size} logs`}
+        onConfirm={handleBulkDelete}
+      />
     </div>
   );
 }
