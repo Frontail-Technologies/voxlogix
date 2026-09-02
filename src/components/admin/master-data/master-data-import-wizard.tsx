@@ -45,46 +45,46 @@ const WORKBOOK_DATA_SOURCES: WorkbookDataSource[] = [
   {
     name: "Equipment Master",
     icon: "equipment",
-    description: "Assets, sections, criticality, categories, map links, and equipment metadata.",
+    description: "Assets, sections, criticality, categories, map links, and equipment metadata. Unique ID required for each record.",
   },
   {
     name: "Issue Categories",
     icon: "warning",
-    description: "Issue labels, function, failure mode, maintenance type, severity, and impact mapping.",
+    description: "Issue labels, function, failure mode, maintenance type, severity, and impact mapping. Upload values only — unique ID is not required.",
   },
   {
     name: "Safety Reporting",
     icon: "permissions",
-    description: "Safety categories, incident types, PPE, reportable flags, and action requirements.",
+    description: "Safety categories, incident types, PPE, reportable flags, and action requirements. Upload values only — unique ID is not required.",
     requiredModules: ["safety log"],
   },
   {
     name: "Measuring Points",
     icon: "activity",
-    description: "Manual measurement points, limits, units, frequency, and alert severity.",
+    description: "Manual measurement points, limits, units, frequency, and alert severity. Unique ID required for each record.",
     requiredModules: ["measurement point"],
   },
   {
     name: "Meter Counters",
     icon: "database",
-    description: "Manual counter readings, reset values, expected consumption, and deviation limits.",
+    description: "Manual counter readings, reset values, expected consumption, and deviation limits. Unique ID required for each record.",
     requiredModules: ["meter counter"],
   },
   {
     name: "Users & Roles",
     icon: "users",
-    description: "Company admins, planners, supervisors, operators, and execution users.",
+    description: "Company admins, planners, supervisors, operators, and execution users. Unique ID required for each record.",
   },
   {
     name: "Kaizen",
     icon: "ai",
-    description: "Suggestion categories, department, status, and immediate-action settings.",
+    description: "Suggestion categories, department, status, and immediate-action settings. Upload values only — unique ID is not required.",
     requiredModules: ["kaizen"],
   },
   {
     name: "Sections/Locations/Shift",
     icon: "planning",
-    description: "Plant, unit, section, sub-location, shift details, and department mapping.",
+    description: "Plant, unit, section, sub-location, shift details, and department mapping. Upload values only — unique ID is not required.",
   },
 ];
 
