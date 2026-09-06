@@ -89,8 +89,74 @@ export type MasterDataImportSheetSummary = {
 };
 
 export type MasterDataImportResult = {
-  fileName: string;
+  fileName?: string;
   sheets: MasterDataImportSheetSummary[];
+};
+
+// --- Two-phase preview/commit model ---
+export type MasterDataSheetKey =
+  | "locations"
+  | "equipment"
+  | "issueCategories"
+  | "safety"
+  | "measuringPoints"
+  | "meterCounters"
+  | "users"
+  | "kaizen";
+
+export type PreviewRowStatus = "accepted" | "rejected";
+
+export type PreviewRowErrorCode =
+  | "REQUIRED"
+  | "DUPLICATE"
+  | "INVALID_FORMAT"
+  | "UNKNOWN_REFERENCE"
+  | "MODULE_DISABLED";
+
+export type PreviewRowError = {
+  field: string;
+  code: PreviewRowErrorCode;
+  message: string;
+};
+
+export type PreviewRow = {
+  previewId: string;
+  status: PreviewRowStatus;
+  originalRowNumber: number;
+  values: Record<string, string>;
+  errors: PreviewRowError[];
+};
+
+export type PreviewSheet = {
+  key: MasterDataSheetKey;
+  label: string;
+  moduleEnabled: boolean;
+  gatingModule: string | null;
+  rows: PreviewRow[];
+  counts: {
+    total: number;
+    accepted: number;
+    rejected: number;
+  };
+};
+
+export type MasterDataImportPreview = {
+  fileName?: string;
+  summary: {
+    // Only ever reflects enabled/importable sheets — disabled-module rows are excluded
+    // from the response entirely, not counted as "rejected".
+    total: number;
+    accepted: number;
+    rejected: number;
+  };
+  // Disabled-module sheets are never included here.
+  sheets: PreviewSheet[];
+  ignoredSheetCount: number;
+};
+
+export type CommitSheetInput = {
+  key: MasterDataSheetKey;
+  rows: Array<{ previewId: string; values: Record<string, string> }>;
 };
 
 export type { PaginationMeta };

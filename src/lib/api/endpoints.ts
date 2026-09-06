@@ -83,7 +83,8 @@ export const apiEndpoints = {
     byId: (equipmentCategoryId: string) => `/equipment-categories/${equipmentCategoryId}`,
   },
   masterDataImports: {
-    finalTemplate: "/master-data-imports/final-template",
+    preview: "/master-data-imports/preview",
+    commit: "/master-data-imports/commit",
     sampleTemplate: "/master-data-imports/sample-template",
   },
   masterDataOptions: {

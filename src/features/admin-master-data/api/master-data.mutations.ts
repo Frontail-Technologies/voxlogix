@@ -2,12 +2,14 @@
 
 import { adminMasterDataKeys } from "@/features/admin-master-data/api/master-data.keys";
 import type {
+  CommitSheetInput,
   EquipmentCategoryItem,
   EquipmentCategoryPayload,
   IssueCategoryItem,
   IssueCategoryPayload,
   LocationItem,
   LocationPayload,
+  MasterDataImportPreview,
   MasterDataImportResult,
 } from "@/features/admin-master-data/api/master-data.types";
 import { adminEquipmentKeys } from "@/features/admin-equipment/api/equipment.keys";
@@ -83,13 +85,27 @@ export function deleteEquipmentCategory(equipmentCategoryId: string) {
   );
 }
 
-export function importFinalMasterDataTemplate(file: File) {
+// Phase 1: upload + parse + validate only. Never writes to the database — see
+// buildMasterDataImportPreview on the backend. The reviewer edits/removes rows against this
+// result, then sends the confirmed rows to commitMasterDataImport below.
+export function previewMasterDataImport(file: File) {
   const formData = new FormData();
   formData.append("file", file);
 
-  return apiRequest<MasterDataImportResult>(apiEndpoints.masterDataImports.finalTemplate, {
+  return apiRequest<MasterDataImportPreview>(apiEndpoints.masterDataImports.preview, {
     method: "POST",
     body: formData,
+    timeoutMs: 120_000,
+  });
+}
+
+// Phase 2: write the reviewer-confirmed rows. The server re-validates everything (module
+// enablement especially) against the authenticated company — this payload is never trusted
+// as-is, so an edited/tampered client state can't bypass server-side rules.
+export function commitMasterDataImportRequest(sheets: CommitSheetInput[]) {
+  return apiRequest<MasterDataImportResult>(apiEndpoints.masterDataImports.commit, {
+    method: "POST",
+    body: { sheets },
     timeoutMs: 120_000,
   });
 }
@@ -139,11 +155,15 @@ export function useDeleteIssueCategory() {
   return useMutation({ mutationFn: deleteIssueCategory, onSuccess: () => queryClient.invalidateQueries({ queryKey: adminMasterDataKeys.all }) });
 }
 
-export function useImportFinalMasterDataTemplate() {
+export function usePreviewMasterDataImport() {
+  return useMutation({ mutationFn: previewMasterDataImport });
+}
+
+export function useCommitMasterDataImport() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: importFinalMasterDataTemplate,
+    mutationFn: commitMasterDataImportRequest,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: adminMasterDataKeys.all });
       void queryClient.invalidateQueries({ queryKey: adminEquipmentKeys.all });

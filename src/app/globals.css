@@ -36,6 +36,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-landing-accent-text: var(--landing-accent-text);
+  --color-icon-strong: var(--icon-strong);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -67,6 +68,11 @@
      --secondary. Do not use this for CTA fills, section backgrounds, or
      illustration/waveform/chart/node fills — those stay --primary. */
   --landing-accent-text: #8a6500;
+  /* Same problem as --landing-accent-text above, different consumer: an icon drawn in raw
+     #FDD000 on a pale primary-tint tile (bg-primary/10–14, i.e. near-white/cream) is barely
+     visible — reuses the same verified-contrast dark gold rather than a second ad-hoc value.
+     Never used on a solid --primary fill; --primary-foreground already owns that pairing. */
+  --icon-strong: #8a6500;
   --secondary: oklch(0.944 0.018 86.9);
   --secondary-foreground: oklch(0.267 0.046 239.4);
   --muted: oklch(0.947 0.012 84.6);
@@ -105,6 +111,9 @@
   /* Bright yellow already reads clearly on dark surfaces, so small text uses
      the same value as the primary brand color here. */
   --landing-accent-text: #fdd000;
+  /* Bright yellow reads clearly on dark tile backgrounds, so icons keep the raw brand color
+     here — only light mode needs the darker substitute above. */
+  --icon-strong: #fdd000;
   --secondary: oklch(0.255 0 0);
   --secondary-foreground: oklch(0.962 0.004 84.6);
   --muted: oklch(0.255 0 0);
@@ -186,6 +195,35 @@
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+  }
+
+  /* Hides the browser scrollbar visually while leaving the element's own scrolling — wheel,
+     trackpad, touch, keyboard — fully functional. Opt-in per element only; never applied
+     globally (see the *::-webkit-scrollbar rules above for the default, visible styling). */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A restrained sliding rail for a staged operation with no real percentage to report
+     (see MasterDataImportProgressOverlay) — never a spinning loader, never a faked number. */
+  .animate-progress-indeterminate {
+    animation: progress-indeterminate 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(20%) scaleX(0.6);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.4);
   }
 }
 

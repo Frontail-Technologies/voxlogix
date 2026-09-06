@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import { AppIcon } from "@/components/common/app-icon";
 import { DynamicBreadcrumbProvider } from "@/components/common/page-header-navigation";
 import { ThemeWhoosh } from "@/components/common/theme-whoosh";
@@ -13,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -49,6 +50,7 @@ import { listQueryOptions, detailQueryOptions } from "@/lib/api/query-options";
 import { useAuth } from "@/features/auth/auth-provider";
 import { shouldShowMobileHeader } from "@/config/layout";
 import { ROLE_LABELS, ROLE_SESSION_IDENTITY, type UserRole } from "@/config/roles";
+import { useNavigationGuardStore } from "@/lib/navigation-guard.store";
 import { cn } from "@/lib/utils";
 
 function roleFromPath(pathname: string): UserRole {
@@ -61,6 +63,7 @@ function roleFromPath(pathname: string): UserRole {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const navigationGuard = useNavigationGuardStore();
   const { user, company } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const whooshTimer = useRef<number | null>(null);
@@ -101,6 +104,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     else if (href === "/master/admins") void queryClient.prefetchQuery({ queryKey: adminKeys.list({ page: 1, limit: 20 }), queryFn: () => getAdmins({ page: 1, limit: 20 }), ...listQueryOptions });
     else if (href === "/master/usage") void queryClient.prefetchQuery({ queryKey: usageKeys.overview(undefined), queryFn: () => getUsageOverview(undefined), ...detailQueryOptions });
     else if (href === "/master/activities") void queryClient.prefetchQuery({ queryKey: activityKeys.list({ page: 1, limit: 20 }), queryFn: () => getActivities({ page: 1, limit: 20 }), ...listQueryOptions });
+  }
+
+  function guardNavigation(event: MouseEvent) {
+    if (!navigationGuard.isBlocked) return;
+    event.preventDefault();
+    toast.error(navigationGuard.message || "Please wait for the current operation to finish.");
   }
 
   function toggleTheme(checked: boolean) {
@@ -162,7 +171,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
-                        render={<Link href={item.href} />}
+                        render={<Link href={item.href} onClick={guardNavigation} />}
                         isActive={active}
                         tooltip={item.title}
                         onMouseEnter={() => prefetchRoute(item.href)}
