@@ -18,8 +18,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { MasterDataSheetKey, PreviewRow } from "@/features/admin-master-data/api/master-data.types";
-import { useMasterDataImportStore, type PreviewFilter } from "@/features/admin-master-data/store/master-data-import.store";
+import type {
+  MasterDataSheetKey,
+  PreviewRow,
+} from "@/features/admin-master-data/api/master-data.types";
+import {
+  useMasterDataImportStore,
+  type PreviewFilter,
+} from "@/features/admin-master-data/store/master-data-import.store";
 
 import { MasterDataImportRowEditDialog } from "./master-data-import-row-edit-dialog";
 
@@ -38,28 +44,43 @@ export function MasterDataImportPreviewPanel({
 }) {
   const preview = useMasterDataImportStore((state) => state.preview);
   const fileName = useMasterDataImportStore((state) => state.fileName);
-  const activeSheetKey = useMasterDataImportStore((state) => state.activeSheetKey);
-  const setActiveSheet = useMasterDataImportStore((state) => state.setActiveSheet);
+  const activeSheetKey = useMasterDataImportStore(
+    (state) => state.activeSheetKey,
+  );
+  const setActiveSheet = useMasterDataImportStore(
+    (state) => state.setActiveSheet,
+  );
   const filter = useMasterDataImportStore((state) => state.filter);
   const setFilter = useMasterDataImportStore((state) => state.setFilter);
   const searchQuery = useMasterDataImportStore((state) => state.searchQuery);
-  const setSearchQuery = useMasterDataImportStore((state) => state.setSearchQuery);
+  const setSearchQuery = useMasterDataImportStore(
+    (state) => state.setSearchQuery,
+  );
   const editRow = useMasterDataImportStore((state) => state.editRow);
   const removeRow = useMasterDataImportStore((state) => state.removeRow);
   const removeRows = useMasterDataImportStore((state) => state.removeRows);
   const restoreRow = useMasterDataImportStore((state) => state.restoreRow);
-  const getEffectiveRows = useMasterDataImportStore((state) => state.getEffectiveRows);
-  const getSheetCounts = useMasterDataImportStore((state) => state.getSheetCounts);
-  const getOverallCounts = useMasterDataImportStore((state) => state.getOverallCounts);
+  const getEffectiveRows = useMasterDataImportStore(
+    (state) => state.getEffectiveRows,
+  );
+  const getSheetCounts = useMasterDataImportStore(
+    (state) => state.getSheetCounts,
+  );
+  const getOverallCounts = useMasterDataImportStore(
+    (state) => state.getOverallCounts,
+  );
   const removedIds = useMasterDataImportStore((state) => state.removedIds);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingRow, setEditingRow] = useState<PreviewRow | null>(null);
 
-  const activeSheet = preview?.sheets.find((sheet) => sheet.key === activeSheetKey) ?? null;
+  const activeSheet =
+    preview?.sheets.find((sheet) => sheet.key === activeSheetKey) ?? null;
   // The filter buttons are the only row-level summary now (no separate top summary strip) —
   // their counts are scoped to the active tab, matching exactly what clicking them shows.
-  const sheetCounts = activeSheetKey ? getSheetCounts(activeSheetKey) : { total: 0, accepted: 0, rejected: 0, removed: 0 };
+  const sheetCounts = activeSheetKey
+    ? getSheetCounts(activeSheetKey)
+    : { total: 0, accepted: 0, rejected: 0, removed: 0 };
   const inScopeTotal = sheetCounts.accepted + sheetCounts.rejected;
   // The bottom action bar imports across every enabled sheet, not just the active tab, so it
   // needs the overall counts rather than the per-tab ones above.
@@ -79,12 +100,20 @@ export function MasterDataImportPreviewPanel({
       if (removedIds.has(row.previewId)) return false;
       if (filter === "accepted" && row.status !== "accepted") return false;
       if (filter === "rejected" && row.status !== "rejected") return false;
-      if (query && !Object.values(row.values).some((value) => value.toLowerCase().includes(query))) return false;
+      if (
+        query &&
+        !Object.values(row.values).some((value) =>
+          value.toLowerCase().includes(query),
+        )
+      )
+        return false;
       return true;
     });
   }, [activeSheetKey, filter, searchQuery, getEffectiveRows, removedIds]);
 
-  const columns = visibleRows[0] ? Object.keys(visibleRows[0].values) : Object.keys(activeSheet?.rows[0]?.values ?? {});
+  const columns = visibleRows[0]
+    ? Object.keys(visibleRows[0].values)
+    : Object.keys(activeSheet?.rows[0]?.values ?? {});
 
   if (!preview || !activeSheet) return null;
 
@@ -108,20 +137,23 @@ export function MasterDataImportPreviewPanel({
   }
 
   return (
-    // A real bounded height (not just a minimum) so the table region below can take
-    // `flex-1 min-h-0` and actually fill whatever space is left, instead of guessing a vh
-    // value — the offset accounts for the admin shell's own padding above and below this
-    // page. `inert` freezes every control in here (tabs, filters, edit/remove, checkboxes,
-    // both action buttons) the moment a commit starts, without relying on the overlay's
-    // visuals alone to stop interaction.
-    <div className="flex h-[calc(100dvh-9rem)] min-h-0 flex-col gap-3" inert={isBlocked}>
+    <div
+      className="flex h-[calc(100dvh-5.5rem)] min-h-0 flex-col gap-3"
+      inert={isBlocked}
+    >
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Preview Master Data</h1>
+          <h1 className="text-xl font-semibold text-foreground">
+            Preview Master Data
+          </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {fileName}
             {preview.ignoredSheetCount > 0 ? (
-              <span className="text-muted-foreground/75"> · some workbook sheets aren&apos;t applicable to this company and were ignored</span>
+              <span className="text-muted-foreground/75">
+                {" "}
+                · some workbook sheets aren&apos;t applicable to this company
+                and were ignored
+              </span>
             ) : null}
           </p>
         </div>
@@ -141,16 +173,30 @@ export function MasterDataImportPreviewPanel({
           crop between it and this border. */}
       <div className="shrink-0 border-b border-border">
         <div className="scrollbar-none overflow-x-auto overflow-y-hidden">
-          <Tabs value={activeSheetKey ?? undefined} onValueChange={(value) => value && setActiveSheet(value as MasterDataSheetKey)}>
-            <TabsList variant="line" className="min-w-full flex-nowrap justify-start gap-1">
+          <Tabs
+            value={activeSheetKey ?? undefined}
+            onValueChange={(value) =>
+              value && setActiveSheet(value as MasterDataSheetKey)
+            }
+          >
+            <TabsList
+              variant="line"
+              className="min-w-full flex-nowrap justify-start gap-1"
+            >
               {preview.sheets.map((sheet) => {
                 const counts = getSheetCounts(sheet.key);
                 if (counts.total === 0) return null;
                 return (
-                  <TabsTrigger key={sheet.key} value={sheet.key} className="gap-2 whitespace-nowrap">
+                  <TabsTrigger
+                    key={sheet.key}
+                    value={sheet.key}
+                    className="gap-2 whitespace-nowrap"
+                  >
                     <span>{sheet.label}</span>
                     {counts.rejected > 0 ? (
-                      <Badge variant="destructive">{counts.accepted} · {counts.rejected}!</Badge>
+                      <Badge variant="destructive">
+                        {counts.accepted} · {counts.rejected}!
+                      </Badge>
                     ) : (
                       <Badge variant="outline">{counts.accepted}</Badge>
                     )}
@@ -166,25 +212,39 @@ export function MasterDataImportPreviewPanel({
           Accepted/Rejected card strip above. */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1">
-          {(["all", "accepted", "rejected"] as PreviewFilter[]).map((option) => {
-            const count = option === "all" ? inScopeTotal : option === "accepted" ? sheetCounts.accepted : sheetCounts.rejected;
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setFilter(option)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                  filter === option ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {option} {count}
-              </button>
-            );
-          })}
+          {(["all", "accepted", "rejected"] as PreviewFilter[]).map(
+            (option) => {
+              const count =
+                option === "all"
+                  ? inScopeTotal
+                  : option === "accepted"
+                    ? sheetCounts.accepted
+                    : sheetCounts.rejected;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setFilter(option)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                    filter === option
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {option} {count}
+                </button>
+              );
+            },
+          )}
         </div>
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 ? (
-            <Button variant="destructive" size="sm" className="rounded-lg" onClick={handleRemoveSelected}>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="rounded-lg"
+              onClick={handleRemoveSelected}
+            >
               Remove {selectedIds.size} selected
             </Button>
           ) : null}
@@ -209,12 +269,18 @@ export function MasterDataImportPreviewPanel({
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
-                      checked={visibleRows.every((row) => selectedIds.has(row.previewId))}
+                      checked={visibleRows.every((row) =>
+                        selectedIds.has(row.previewId),
+                      )}
                       onCheckedChange={() =>
                         setSelectedIds((current) => {
-                          const allSelected = visibleRows.every((row) => current.has(row.previewId));
+                          const allSelected = visibleRows.every((row) =>
+                            current.has(row.previewId),
+                          );
                           if (allSelected) return new Set();
-                          return new Set(visibleRows.map((row) => row.previewId));
+                          return new Set(
+                            visibleRows.map((row) => row.previewId),
+                          );
                         })
                       }
                       aria-label="Select all visible rows"
@@ -231,22 +297,39 @@ export function MasterDataImportPreviewPanel({
                 {visibleRows.map((row) => (
                   <TableRow key={row.previewId}>
                     <TableCell>
-                      <Checkbox checked={selectedIds.has(row.previewId)} onCheckedChange={() => toggleSelect(row.previewId)} aria-label={`Select row ${row.originalRowNumber}`} />
+                      <Checkbox
+                        checked={selectedIds.has(row.previewId)}
+                        onCheckedChange={() => toggleSelect(row.previewId)}
+                        aria-label={`Select row ${row.originalRowNumber}`}
+                      />
                     </TableCell>
                     <TableCell>
                       <RowStatusIndicator row={row} />
                     </TableCell>
                     {columns.map((column) => (
-                      <TableCell key={column} className="max-w-56 truncate text-muted-foreground">
+                      <TableCell
+                        key={column}
+                        className="max-w-56 truncate text-muted-foreground"
+                      >
                         {row.values[column] || "—"}
                       </TableCell>
                     ))}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="rounded-lg" onClick={() => setEditingRow(row)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-lg"
+                          onClick={() => setEditingRow(row)}
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm" className="rounded-lg text-destructive hover:text-destructive" onClick={() => removeRow(row.previewId)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-lg text-destructive hover:text-destructive"
+                          onClick={() => removeRow(row.previewId)}
+                        >
                           Remove
                         </Button>
                       </div>
@@ -257,7 +340,11 @@ export function MasterDataImportPreviewPanel({
             </Table>
           ) : (
             <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-              {filter === "accepted" ? "No accepted rows." : filter === "rejected" ? "No rejected rows." : "No rows match this filter."}
+              {filter === "accepted"
+                ? "No accepted rows."
+                : filter === "rejected"
+                  ? "No rejected rows."
+                  : "No rows match this filter."}
             </div>
           )}
         </div>
@@ -275,14 +362,25 @@ export function MasterDataImportPreviewPanel({
           never needs to fight it for the bottom edge. */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-1 py-3">
         <div className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{overall.accepted} rows ready</span>
+          <span className="font-medium text-foreground">
+            {overall.accepted} rows ready
+          </span>
           {overall.rejected ? ` · ${overall.rejected} need attention` : ""}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="rounded-xl" onClick={onBack} disabled={isConfirming}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={onBack}
+            disabled={isConfirming}
+          >
             Back
           </Button>
-          <Button className="rounded-xl" onClick={onConfirm} disabled={isConfirming || overall.accepted === 0}>
+          <Button
+            className="rounded-xl"
+            onClick={onConfirm}
+            disabled={isConfirming || overall.accepted === 0}
+          >
             {isConfirming
               ? "Starting Import..."
               : overall.rejected > 0
@@ -292,7 +390,12 @@ export function MasterDataImportPreviewPanel({
         </div>
       </div>
 
-      <MasterDataImportRowEditDialog row={editingRow} open={Boolean(editingRow)} onOpenChange={(open) => !open && setEditingRow(null)} onSave={handleEditSave} />
+      <MasterDataImportRowEditDialog
+        row={editingRow}
+        open={Boolean(editingRow)}
+        onOpenChange={(open) => !open && setEditingRow(null)}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }
@@ -309,20 +412,34 @@ function RowStatusIndicator({ row }: { row: PreviewRow }) {
 
   const primaryError = row.errors[0];
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive" title={row.errors.map((error) => error.message).join(" ")}>
+    <span
+      className="inline-flex items-center gap-1 text-xs font-medium text-destructive"
+      title={row.errors.map((error) => error.message).join(" ")}
+    >
       <AppIcon name="warning" className="size-3.5" />
       {primaryError?.message ?? "Rejected"}
     </span>
   );
 }
 
-function RemovedRowsBar({ count, onRestoreAll }: { count: number; onRestoreAll: () => void }) {
+function RemovedRowsBar({
+  count,
+  onRestoreAll,
+}: {
+  count: number;
+  onRestoreAll: () => void;
+}) {
   return (
     <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-sm text-muted-foreground">
       <span>
         {count} row{count === 1 ? "" : "s"} removed from this import.
       </span>
-      <Button variant="ghost" size="sm" className="rounded-lg" onClick={onRestoreAll}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="rounded-lg"
+        onClick={onRestoreAll}
+      >
         Undo all
       </Button>
     </div>
