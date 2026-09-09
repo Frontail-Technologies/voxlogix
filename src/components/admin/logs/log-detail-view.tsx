@@ -23,6 +23,8 @@ import {
   fieldValueLabel,
   formatLogDate,
   formatMinutes,
+  getReadingSummaryRows,
+  isReadingLog,
   logLabel,
   logStatuses,
 } from "@/features/logs/log.presentation";
@@ -56,7 +58,7 @@ export function LogDetailView({ logId }: { logId: string }) {
           <div className="space-y-3 sm:space-y-4">
             <LogOverviewCard log={log} />
             <AiFieldsCard log={log} />
-            <TranscriptCard log={log} />
+            {isReadingLog(log.moduleType) ? null : <TranscriptCard log={log} />}
             <MediaCard log={log} />
             <TimelineCard log={log} />
           </div>
@@ -170,22 +172,29 @@ function LocationMap({ latitude, longitude }: { latitude?: string | null; longit
 }
 
 function AiFieldsCard({ log }: { log: AdminLogDetail }) {
-  const fields = Object.entries(log.extractedFields ?? {});
+  const isReading = isReadingLog(log.moduleType);
+  // Measuring Point / Meter Counter logs skip the generic extractedFields dump — those
+  // internal keys (readingType, isAlert, pointId, ...) don't match any module's configured
+  // field labels and would just be noise — in favor of the same purpose-built reading
+  // summary shown on mobile (Actual Reading / Allowed Range / Status, etc.), reading the
+  // exact keys the backend actually writes for these alerts.
+  const readingRows = isReading ? getReadingSummaryRows(log.moduleType, log.extractedFields) : [];
+  const fields = isReading ? [] : Object.entries(log.extractedFields ?? {});
 
   return (
     <DashboardCard>
       <CardHeader className="flex flex-row items-center gap-2 px-4 py-3 sm:px-5 sm:py-4">
         <AppIcon name="ai" className="size-4 text-primary" />
-        <CardTitle>AI Extracted Fields</CardTitle>
+        <CardTitle>{isReading ? "Reading Details" : "AI Extracted Fields"}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3 px-4 pb-4 pt-1 sm:gap-4 sm:px-5 sm:pb-5 sm:pt-2 lg:grid-cols-2">
-        {fields.length ? (
-          fields.map(([key, value]) => (
-            <FieldBlock key={key} label={logLabel(key)} value={fieldValueLabel(value)} />
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground">No AI fields saved yet.</p>
-        )}
+        {isReading
+          ? readingRows.map((row) => <FieldBlock key={row.label} label={row.label} value={row.value} />)
+          : fields.length
+            ? fields.map(([key, value]) => (
+                <FieldBlock key={key} label={logLabel(key)} value={fieldValueLabel(value)} />
+              ))
+            : <p className="text-sm text-muted-foreground">No AI fields saved yet.</p>}
       </CardContent>
     </DashboardCard>
   );

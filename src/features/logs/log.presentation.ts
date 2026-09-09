@@ -87,3 +87,88 @@ export function fieldValueLabel(value: unknown) {
   }
   return JSON.stringify(value);
 }
+
+// Measuring Point and Meter Counter logs are created from a structured reading, not a
+// voice recording — matched case-insensitively against the canonical module type so this
+// still works for both the fixed "MEASUREMENT_POINT"/"METER_COUNTER" keys and (defensively)
+// any stray legacy value. Mirrors mobile-app's identically-named helpers in
+// features/logs/utils/log-detail.utils.ts — kept in sync by hand across the two apps since
+// they're separate codebases, but same semantics.
+export function isMeasuringPointLog(moduleType: string): boolean {
+  return /measur/i.test(moduleType);
+}
+
+export function isMeterCounterLog(moduleType: string): boolean {
+  return /meter|counter/i.test(moduleType) && !isMeasuringPointLog(moduleType);
+}
+
+export function isReadingLog(moduleType: string): boolean {
+  return isMeasuringPointLog(moduleType) || isMeterCounterLog(moduleType);
+}
+
+export type ReadingSummaryRow = { label: string; value: string };
+
+function readingField(fields: Record<string, unknown> | null | undefined, key: string): string {
+  const value = fields?.[key];
+  return value === null || value === undefined || value === "" ? "" : String(value);
+}
+
+function formatWithUnit(value: string, unit: string): string {
+  if (!value) return "-";
+  return unit ? `${value} ${unit}` : value;
+}
+
+// Reads the exact keys the backend actually writes for an out-of-limit/deviation alert
+// (measuring-point.service.ts / meter-counter.service.ts) directly — not a module's
+// configured report-field keys, which don't match these. This is the same extractedFields
+// blob already returned with the log — an immutable snapshot recorded in the same
+// transaction as the reading itself, so it's authoritative, not guessed or copied.
+export function getReadingSummaryRows(moduleType: string, extractedFields: Record<string, unknown> | null | undefined): ReadingSummaryRow[] {
+  const fields = extractedFields;
+  const unit = readingField(fields, "unit");
+
+  if (isMeasuringPointLog(moduleType)) {
+    const pointCode = readingField(fields, "pointCode");
+    const measurementName = readingField(fields, "measurementName");
+    const measuredValue = readingField(fields, "measuredValue");
+    const lowerLimit = readingField(fields, "lowerLimit");
+    const upperLimit = readingField(fields, "upperLimit");
+    const targetValue = readingField(fields, "targetValue");
+    const status = readingField(fields, "measurementStatus") || readingField(fields, "readingStatus");
+
+    const rows: ReadingSummaryRow[] = [];
+    if (pointCode || measurementName) {
+      rows.push({ label: "Measuring Point", value: [pointCode, measurementName].filter(Boolean).join(" — ") || "-" });
+    }
+    rows.push({ label: "Actual Reading", value: formatWithUnit(measuredValue, unit) });
+    rows.push({
+      label: "Allowed Range",
+      value: lowerLimit && upperLimit ? formatWithUnit(`${lowerLimit}–${upperLimit}`, unit) : targetValue ? `Target: ${formatWithUnit(targetValue, unit)}` : "-",
+    });
+    if (status) rows.push({ label: "Status", value: logLabel(status) });
+    return rows;
+  }
+
+  if (isMeterCounterLog(moduleType)) {
+    const counterCode = readingField(fields, "counterCode");
+    const counterName = readingField(fields, "counterName");
+    const currentReading = readingField(fields, "currentReading");
+    const previousReading = readingField(fields, "previousReading");
+    const consumptionDelta = readingField(fields, "consumptionDelta");
+    const deviationPercent = readingField(fields, "deviationPercent");
+    const status = readingField(fields, "counterStatus") || readingField(fields, "readingStatus");
+
+    const rows: ReadingSummaryRow[] = [];
+    if (counterCode || counterName) {
+      rows.push({ label: "Meter Counter", value: [counterCode, counterName].filter(Boolean).join(" — ") || "-" });
+    }
+    rows.push({ label: "Current Reading", value: formatWithUnit(currentReading, unit) });
+    if (previousReading) rows.push({ label: "Previous Reading", value: formatWithUnit(previousReading, unit) });
+    if (consumptionDelta) rows.push({ label: "Consumption", value: formatWithUnit(consumptionDelta, unit) });
+    if (deviationPercent) rows.push({ label: "Deviation", value: `${deviationPercent}%` });
+    if (status) rows.push({ label: "Status", value: logLabel(status) });
+    return rows;
+  }
+
+  return [];
+}
