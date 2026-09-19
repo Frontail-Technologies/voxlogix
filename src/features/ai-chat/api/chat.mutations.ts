@@ -22,7 +22,7 @@ export function sendChatMessage(payload: ChatPayload) {
   return apiRequest<ChatResponse>(apiEndpoints.ai.chat, {
     method: "POST",
     body: payload,
-    timeoutMs: 45_000,
+    timeoutMs: 180_000,
   });
 }
 
