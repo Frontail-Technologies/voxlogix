@@ -60,8 +60,8 @@ export function LogsCards({ logs }: { logs: AdminLogListItem[] }) {
 
             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <div className="flex min-w-0 items-center gap-1.5">
-                <EntityAvatar initials={log.createdBy.initials ?? "AD"} className="size-6" fallbackClassName="text-[10px]" />
-                <span className="truncate">{log.createdBy.fullName ?? "System"}</span>
+                <EntityAvatar initials={log.createdBy?.initials ?? "AD"} className="size-6" fallbackClassName="text-[10px]" />
+                <span className="truncate">{log.createdBy?.fullName ?? "System"}</span>
               </div>
               <span className="shrink-0">{formatLogDate(log.createdAt)}</span>
             </div>

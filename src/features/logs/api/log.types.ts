@@ -12,7 +12,7 @@
   updatedAt: string;
   thumbnailUrl: string | null;
   equipment: { id: string | null; equipmentCode: string | null; name: string | null; section: string | null; subLocation: string | null } | null;
-  createdBy: { id: string | null; fullName: string | null; initials: string | null };
+  createdBy: { id: string | null; fullName: string | null; initials: string | null } | null;
 };
 
 export type AdminLogDetail = AdminLogListItem & {

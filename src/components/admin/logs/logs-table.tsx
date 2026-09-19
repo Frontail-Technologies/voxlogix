@@ -113,11 +113,11 @@ export function LogsTable({ logs, selectedIds, onToggleSelect, onToggleSelectAll
               <TableCell>
                 <div className="flex items-center gap-2">
                   <EntityAvatar
-                    initials={log.createdBy.initials ?? "AD"}
+                    initials={log.createdBy?.initials ?? "AD"}
                     className="size-8"
                     fallbackClassName="text-xs"
                   />
-                  <span>{log.createdBy.fullName ?? "System"}</span>
+                  <span>{log.createdBy?.fullName ?? "System"}</span>
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground">

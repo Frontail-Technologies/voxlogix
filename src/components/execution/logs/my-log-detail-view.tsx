@@ -73,7 +73,7 @@ function LogOverviewCard({ log }: { log: AdminLogDetail }) {
 
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <Stat label="Created" value={formatLogDate(log.createdAt)} />
-          <Stat label="Created By" value={log.createdBy.fullName ?? "System"} />
+          <Stat label="Created By" value={log.createdBy?.fullName ?? "System"} />
           <Stat label="Module" value={log.module?.name ?? logLabel(log.moduleType)} />
           <Stat label="Downtime" value={formatMinutes(log.downtimeMinutes)} />
         </div>

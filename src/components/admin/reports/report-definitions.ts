@@ -144,7 +144,7 @@ function logRow(log: AdminLogListItem): ReportRow {
     module: logLabel(log.moduleType),
     status: logLabel(log.status),
     severity: logLabel(log.severity),
-    createdBy: log.createdBy.fullName ?? "-",
+    createdBy: log.createdBy?.fullName ?? "-",
     downtimeMinutes: log.downtimeMinutes,
   };
 }
