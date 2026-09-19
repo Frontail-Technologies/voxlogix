@@ -1,5 +1,10 @@
 import Image from "next/image";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
+
+// The VoxLogiX wordmark is set in Astra (public/Astra.otf), self-hosted via next/font so it
+// is preloaded and never falls back to a flash of unstyled text.
+const astra = localFont({ src: "../../../public/Astra.otf", display: "swap" });
 
 type BrandLogoProps = {
   className?: string;
@@ -55,7 +60,7 @@ export function BrandLogo({ className, markClassName, textClassName, size = "md"
         )}
       </span>
       <span
-        className={cn("shrink-0 font-bold leading-none tracking-tight whitespace-nowrap text-foreground", classes.text, textClassName)}
+        className={cn(astra.className, "shrink-0 font-normal leading-none tracking-wide whitespace-nowrap text-foreground", classes.text, textClassName)}
       >
         VoxLogiX
       </span>
