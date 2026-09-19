@@ -13,6 +13,8 @@ export function createEquipmentManual(payload: EquipmentManualPayload | FormData
   return apiRequest<EquipmentManualDetail>(apiEndpoints.equipmentManuals.root, {
     method: "POST",
     body: payload,
+    // Large manuals (several MB) can take a while to reach storage on a slow connection.
+    timeoutMs: 180_000,
   });
 }
 
@@ -20,6 +22,7 @@ export function updateEquipmentManual(manualId: string, payload: Partial<Equipme
   return apiRequest<EquipmentManualDetail>(apiEndpoints.equipmentManuals.byId(manualId), {
     method: "PATCH",
     body: payload,
+    timeoutMs: 180_000,
   });
 }
 
