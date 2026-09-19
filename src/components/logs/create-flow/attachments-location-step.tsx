@@ -1,5 +1,6 @@
 "use client";
 
+import { compressImageFile } from "@/lib/image-compression";
 import { useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 
@@ -76,15 +77,17 @@ export function AttachmentsLocationStep({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRefs = useRef<Partial<Record<PhotoSlotKey, HTMLInputElement | null>>>({});
 
-  function handleFileSelect(slot: PhotoSlotKey, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  async function handleFileSelect(slot: PhotoSlotKey, event: ChangeEvent<HTMLInputElement>) {
+    const original = event.target.files?.[0];
     event.target.value = "";
-    if (!file) return;
+    if (!original) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (!original.type.startsWith("image/")) {
       toast.error("Please choose a valid image file.");
       return;
     }
+
+    const file = await compressImageFile(original);
 
     setPhotos((current) => {
       const existing = current[slot];

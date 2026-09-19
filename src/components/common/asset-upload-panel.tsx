@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import { compressImageFile } from "@/lib/image-compression";
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 
@@ -61,18 +62,21 @@ export function AssetUploadPanel({
     };
   }, [value]);
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const original = event.target.files?.[0];
+    const input = event.target;
 
-    if (!file) {
+    if (!original) {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (!original.type.startsWith("image/")) {
       toast.error("Please choose a valid image file.");
-      event.target.value = "";
+      input.value = "";
       return;
     }
+
+    const file = await compressImageFile(original);
 
     if (isPendingImageAsset(value)) {
       URL.revokeObjectURL(value.url);
@@ -89,7 +93,7 @@ export function AssetUploadPanel({
       file,
     });
     toast.success("Image selected. Save to upload it.");
-    event.target.value = "";
+    input.value = "";
   }
 
   function handleRemove() {

@@ -347,16 +347,14 @@ function ManualCard({ manual }: { manual: EquipmentManualListItem }) {
       </div>
       <div className="mt-3 flex items-center justify-end gap-1">
         {manual.fileUrl ? (
-          <a
-            href={manual.fileUrl}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
             className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label="Open manual"
-            download={manualDownloadName(manual)}
+            aria-label="Download manual"
+            onClick={() => void downloadManual(manual)}
           >
             <AppIcon name="download" className="size-4" />
-          </a>
+          </button>
         ) : null}
         <button
           type="button"
@@ -403,6 +401,31 @@ function formatDate(value: string) {
 
 function manualDisplayName(manual: EquipmentManualListItem) {
   return manualDownloadName(manual) || manual.fileUrl || "Manual context only";
+}
+
+// Cloudinary stores raw uploads under an extension-less URL and ignores the `download`
+// attribute cross-origin, so a plain link saves the PDF with no ".pdf". Fetch the file
+// (Cloudinary serves CORS: *) and save the blob under the proper name instead; fall back to
+// opening the URL if the fetch is blocked.
+async function downloadManual(manual: EquipmentManualListItem) {
+  if (!manual.fileUrl) return;
+  const name = manualDownloadName(manual) ?? `${manual.title || "manual"}.pdf`;
+
+  try {
+    const response = await fetch(manual.fileUrl);
+    if (!response.ok) throw new Error(`Download failed (${response.status})`);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(new Blob([blob], { type: manual.mimeType || blob.type }));
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  } catch {
+    window.open(manual.fileUrl, "_blank", "noopener,noreferrer");
+  }
 }
 
 function manualDownloadName(manual: EquipmentManualListItem) {
