@@ -8,7 +8,7 @@ import { DashboardPageHeader } from "@/components/common/dashboard-ui";
 import { ReportViewer, type CompanyInfo } from "@/components/report-viewer";
 import { buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useCompanyDetail } from "@/features/master-companies/api/company.queries";
+import { useMyCompany } from "@/features/master-companies/api/company.queries";
 import { cn } from "@/lib/utils";
 
 import { adminReportDefinitions, reportCards, type AdminReportType } from "./report-definitions";
@@ -43,7 +43,7 @@ export function ReportsOverview() {
 
 export function ReportDetail({ type }: { type: AdminReportType }) {
   const { company } = useAuth();
-  const companyQuery = useCompanyDetail(company?.id ?? "");
+  const companyQuery = useMyCompany(Boolean(company?.id));
   const report = adminReportDefinitions[type];
 
   const reportCompany = useMemo<CompanyInfo>(() => {

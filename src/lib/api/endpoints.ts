@@ -40,6 +40,7 @@ export const apiEndpoints = {
   companies: {
     root: "/companies",
     options: "/companies/options",
+    me: "/companies/me",
     byId: (companyId: string) => `/companies/${companyId}`,
     access: (companyId: string) => `/companies/${companyId}/access`,
   },

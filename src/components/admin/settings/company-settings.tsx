@@ -8,14 +8,14 @@ import { CardContent, CardHeader, CardTitle, DashboardCard, DashboardPageHeader 
 import { MasterDetailSkeleton } from "@/components/master/master-skeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/features/auth/api/auth.queries";
-import { useCompanyDetail } from "@/features/master-companies/api/company.queries";
+import { useMyCompany } from "@/features/master-companies/api/company.queries";
 import type { CompanyDetail } from "@/features/master-companies/api/company.types";
 import { cn } from "@/lib/utils";
 
 export function CompanySettings() {
   const currentUserQuery = useCurrentUser();
   const companyId = currentUserQuery.data?.data?.company?.id ?? "";
-  const companyQuery = useCompanyDetail(companyId);
+  const companyQuery = useMyCompany(Boolean(companyId));
   const company = companyQuery.data?.data;
   const isLoading = currentUserQuery.isLoading || companyQuery.isLoading;
   const isError = currentUserQuery.isError || companyQuery.isError;

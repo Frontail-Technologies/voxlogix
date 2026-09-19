@@ -1,4 +1,4 @@
-﻿import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { companyKeys } from "@/features/master-companies/api/company.keys";
@@ -30,6 +30,13 @@ export function useCompaniesList(params: CompanyListParams = {}) {
 }
 export function useCompanyDetail(companyId: string) {
   return useQuery({ queryKey: companyKeys.detail(companyId), queryFn: () => getCompanyById(companyId), enabled: Boolean(companyId), ...detailQueryOptions });
+}
+// The signed-in user's own company — the only company endpoint non-MASTER roles may call.
+export function getMyCompany() {
+  return apiRequest<CompanyDetail>(apiEndpoints.companies.me);
+}
+export function useMyCompany(enabled = true) {
+  return useQuery({ queryKey: companyKeys.detail("me"), queryFn: getMyCompany, enabled, ...detailQueryOptions });
 }
 export function useCompanyAccess(companyId: string) {
   return useQuery({ queryKey: companyKeys.access(companyId), queryFn: () => getCompanyAccess(companyId), enabled: Boolean(companyId), ...detailQueryOptions });
