@@ -26,6 +26,15 @@ export const apiEndpoints = {
   activities: {
     root: "/activities",
   },
+  notifications: {
+    adminSend: "/notifications/admin-send",
+  },
+  assignments: {
+    root: "/assignments",
+    byId: (assignmentId: string) => `/assignments/${assignmentId}`,
+    cancel: (assignmentId: string) => `/assignments/${assignmentId}/cancel`,
+    executors: "/assignments/executors/options",
+  },
   aiUsage: {
     overview: "/ai-usage/overview",
     companies: "/ai-usage/companies",

@@ -263,6 +263,19 @@ function EditForm({
         nextErrors[field.name] = `${field.label} must be a number.`;
       }
     }
+    if (source === "meterCounters") {
+      const hasExpectedConsumption = Boolean(values.expectedDailyConsumption?.trim());
+      const hasDeviationTolerance = Boolean(values.alertDeviationPct?.trim());
+      if (hasExpectedConsumption !== hasDeviationTolerance) {
+        const message = "Expected consumption and deviation tolerance must both be provided or both be blank.";
+        nextErrors.expectedDailyConsumption = message;
+        nextErrors.alertDeviationPct = message;
+      } else if (hasExpectedConsumption && Number(values.expectedDailyConsumption) <= 0) {
+        nextErrors.expectedDailyConsumption = "Expected daily consumption must be greater than 0.";
+      } else if (hasDeviationTolerance && Number(values.alertDeviationPct) < 0) {
+        nextErrors.alertDeviationPct = "Alert deviation % must be 0 or greater.";
+      }
+    }
     if (hasFieldErrors(nextErrors)) {
       setErrors(nextErrors);
       focusFirstError(event.currentTarget, nextErrors);

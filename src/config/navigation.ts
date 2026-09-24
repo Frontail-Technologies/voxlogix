@@ -22,6 +22,7 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
   admin: [
     { title: "Dashboard", href: "/admin/dashboard", icon: "dashboard" },
     { title: "Logs", href: "/admin/logs", icon: "logs" },
+    { title: "Schedule Work", href: "/admin/schedule", icon: "calendar" },
     { title: "Master Data", href: "/admin/master-data", icon: "upload" },
     { title: "Equipment", href: "/admin/equipment", icon: "equipment", requiredModules: ["equipment log"] },
     { title: "Issue Categories", href: "/admin/issue-categories", icon: "warning" },
@@ -32,11 +33,13 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
     { title: "Kaizen", href: "/admin/kaizen", icon: "ai", requiredModules: ["kaizen"] },
     { title: "Locations & Shifts", href: "/admin/locations", icon: "planning" },
     { title: "Users", href: "/admin/users", icon: "users" },
+    { title: "Notifications", href: "/admin/notifications", icon: "notifications" },
     { title: "Reports", href: "/admin/reports", icon: "reports" },
     { title: "Settings", href: "/admin/settings", icon: "settings" },
   ],
   planner: [
     { title: "Dashboard", href: "/planner/dashboard", icon: "dashboard" },
+    { title: "Schedule Work", href: "/planner/schedule", icon: "calendar" },
     { title: "Assigned Logs", href: "/planner/assigned-logs", icon: "logs" },
     { title: "Submitted Logs", href: "/planner/submitted-logs", icon: "status" },
     { title: "Planned Logs", href: "/planner/planned-logs", icon: "planning" },

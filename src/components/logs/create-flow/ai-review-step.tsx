@@ -79,12 +79,13 @@ function applyMeterCounterCalculations(fields: ExtractedLogFields) {
     const consumption = Math.max(0, currentReading - previousReading);
     next.consumption = consumption;
 
-    if (expectedDailyConsumption !== null && expectedDailyConsumption > 0) {
+    if (expectedDailyConsumption !== null && expectedDailyConsumption > 0 && alertDeviationPct !== null) {
       const deviationPercent = Number((((consumption - expectedDailyConsumption) / expectedDailyConsumption) * 100).toFixed(2));
       next.deviationPercent = deviationPercent;
-      if (alertDeviationPct !== null) {
-        next.isOutOfLimit = Math.abs(deviationPercent) > alertDeviationPct ? "Yes" : "No";
-      }
+      next.isOutOfLimit = deviationPercent > alertDeviationPct ? "Yes" : "No";
+    } else {
+      next.deviationPercent = null;
+      next.isOutOfLimit = "No";
     }
   }
 
@@ -121,8 +122,8 @@ export function AiReviewStep({
           ...next,
           unit: stringMeta(meta, "counterUnit") ?? next.unit,
           meterType: stringMeta(meta, "meterType") ?? next.meterType,
-          expectedDailyConsumption: numberMeta(meta, "expectedDailyConsumption") ?? next.expectedDailyConsumption,
-          alertDeviationPct: numberMeta(meta, "alertDeviationPct") ?? next.alertDeviationPct,
+          expectedDailyConsumption: numberMeta(meta, "expectedDailyConsumption"),
+          alertDeviationPct: numberMeta(meta, "alertDeviationPct"),
         };
       }
 
