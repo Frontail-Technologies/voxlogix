@@ -5,25 +5,25 @@ const FOOTER_GROUPS = [
   {
     title: "Product",
     links: [
-      { label: "How It Works", href: "#how-it-works" },
-      { label: "Features", href: "#features" },
-      { label: "AI Troubleshooting", href: "#ai-troubleshooting" },
+      { label: "How It Works", href: "/#how-it-works" },
+      { label: "Features", href: "/#features" },
+      { label: "AI Troubleshooting", href: "/#ai-troubleshooting" },
     ],
   },
   {
     title: "Solutions",
     links: [
-      { label: "Safety", href: "#solutions" },
-      { label: "Reporting", href: "#reporting" },
-      { label: "Operational Logging", href: "#features" },
+      { label: "Safety", href: "/#solutions" },
+      { label: "Reporting", href: "/#reporting" },
+      { label: "Operational Logging", href: "/#features" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Request a Demo", href: "#demo" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "FAQ", href: "#faq" },
+      { label: "Request a Demo", href: "/#demo" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "FAQ", href: "/#faq" },
     ],
   },
 ];
@@ -66,6 +66,14 @@ export function Footer() {
           <p>
             &copy; {year} VoxLogiX. All rights reserved.
           </p>
+          <nav className="landing-footer-legal" aria-label="Legal">
+            <Link href="/privacy-policy" className="landing-footer-link">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="landing-footer-link">
+              Terms of Service
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

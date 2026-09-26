@@ -30,6 +30,10 @@ import {
 } from "@/features/admin-equipment-manuals/api/equipment-manual.mutations";
 import { useEquipmentManualsList } from "@/features/admin-equipment-manuals/api/equipment-manual.queries";
 import type { EquipmentManualListItem } from "@/features/admin-equipment-manuals/api/equipment-manual.types";
+import {
+  EQUIPMENT_MANUAL_MAX_FILE_SIZE_MB,
+  equipmentManualUploadError,
+} from "@/features/admin-equipment-manuals/equipment-manual-upload";
 import { showApiErrorToast } from "@/lib/api/error-toast";
 import { buildMultipartPayload } from "@/lib/api/multipart";
 import {
@@ -124,6 +128,7 @@ function ManualForm({
   const [manualUrl, setManualUrl] = useState("");
   const [manualText, setManualText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [saveStage, setSaveStage] = useState<"idle" | "uploading" | "saving">("idle");
   const [errors, setErrors] = useState<FieldErrors>({});
   const manualTitle = title.trim() || (selectedEquipment ? `${selectedEquipment.name} Manual` : "");
   const canSubmit = Boolean(selectedEquipmentId && manualTitle && (file || manualUrl.trim() || manualText.trim()));
@@ -147,20 +152,25 @@ function ManualForm({
     }
 
     try {
+      setSaveStage(file ? "uploading" : "saving");
       await createMutation.mutateAsync(buildMultipartPayload({
         equipmentId: selectedEquipmentId,
         title: manualTitle,
         manualUrl: manualUrl.trim() || null,
         manualText: manualText.trim() || null,
       }, file));
-      toast.success(manualText.trim() ? "Manual context saved" : "Manual uploaded. AI context will be prepared in the background.");
+      toast.success(manualText.trim() ? "Manual context saved" : "Manual uploaded", {
+        description: manualText.trim() ? undefined : "Preparing manual context in the background.",
+      });
       setTitle("");
       setManualUrl("");
       setManualText("");
       setFile(null);
       setErrors({});
     } catch (error) {
-      showApiErrorToast(error, "Could not save equipment manual");
+      toast.error(equipmentManualUploadError(error));
+    } finally {
+      setSaveStage("idle");
     }
   }
 
@@ -229,8 +239,9 @@ function ManualForm({
           <div className="lg:col-span-2">
             <DocumentUploadPanel
               title="PDF Manual"
-              subtitle="Upload a source PDF. Context is prepared in the background if no text is pasted below."
+              subtitle={`Upload a PDF up to ${EQUIPMENT_MANUAL_MAX_FILE_SIZE_MB} MB. Context is prepared in the background if no text is pasted below.`}
               value={file}
+              maxSizeMb={EQUIPMENT_MANUAL_MAX_FILE_SIZE_MB}
               onChange={(nextFile) => {
                 setFile(nextFile);
                 setErrors((current) => clearFieldError(current, "manualSource"));
@@ -253,7 +264,11 @@ function ManualForm({
           <div className="flex flex-wrap items-center gap-2 lg:col-span-2">
             <Button type="submit" className="h-10 rounded-xl" disabled={!canSubmit || createMutation.isPending || hasFieldErrors(errors)}>
               <AppIcon name="plus" className="size-4" />
-              {createMutation.isPending ? "Saving..." : "Save Manual"}
+              {saveStage === "uploading"
+                ? "Uploading PDF..."
+                : saveStage === "saving"
+                  ? "Saving manual..."
+                  : "Save Manual"}
             </Button>
             <p className="text-xs text-muted-foreground">
               AI uses saved context for fast equipment answers.

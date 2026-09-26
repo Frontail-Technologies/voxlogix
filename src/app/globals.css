@@ -2752,4 +2752,114 @@
   margin-top: 2rem;
   font-size: 0.8125rem;
   color: var(--footer-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .landing-footer-bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.landing-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Public legal documents */
+
+.legal-main {
+  min-height: 70vh;
+}
+
+.legal-page .landing-container {
+  box-sizing: border-box;
+}
+
+.legal-hero {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--primary) 8%, var(--background));
+  padding-block: 3.5rem;
+}
+
+.legal-hero-inner,
+.legal-document {
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.legal-title {
+  margin-top: 0.75rem;
+  font-family: var(--font-bebas), "Arial Narrow", Impact, sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+}
+
+.legal-summary {
+  max-width: 44rem;
+  margin-top: 1.25rem;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: color-mix(in oklch, var(--foreground) 72%, transparent);
+}
+
+.legal-updated {
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.legal-document {
+  padding-block: 2.5rem 4.5rem;
+}
+
+.legal-section {
+  padding-block: 1.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.legal-section:last-child {
+  border-bottom: 0;
+}
+
+.legal-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
+.legal-section p,
+.legal-section li {
+  font-size: 0.9875rem;
+  line-height: 1.75;
+  color: color-mix(in oklch, var(--foreground) 76%, transparent);
+}
+
+.legal-section p,
+.legal-section ul {
+  margin-top: 0.875rem;
+}
+
+.legal-section ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.legal-section li + li {
+  margin-top: 0.5rem;
+}
+
+.legal-callout {
+  border-left: 3px solid var(--primary);
+  padding-left: 1.25rem;
 }

@@ -8,13 +8,13 @@ import { CallButton } from "./CallButton";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "AI Troubleshooting", href: "#ai-troubleshooting" },
-  { label: "Solutions", href: "#solutions" },
-  { label: "Reporting", href: "#reporting" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Features", href: "/#features" },
+  { label: "AI Troubleshooting", href: "/#ai-troubleshooting" },
+  { label: "Solutions", href: "/#solutions" },
+  { label: "Reporting", href: "/#reporting" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 export function Navbar() {
@@ -40,7 +40,7 @@ export function Navbar() {
             <CallButton />
             <ThemeToggle />
           </div>
-          <Link href="#demo" className="landing-btn-outline hidden xl:inline-flex">
+          <Link href="/#demo" className="landing-btn-outline hidden xl:inline-flex">
             Request a Demo
           </Link>
 
@@ -73,7 +73,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link href="#demo" className="landing-btn-outline justify-center" onClick={() => setMobileOpen(false)}>
+          <Link href="/#demo" className="landing-btn-outline justify-center" onClick={() => setMobileOpen(false)}>
             Request a Demo
           </Link>
         </div>

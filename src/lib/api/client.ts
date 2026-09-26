@@ -23,15 +23,17 @@ let redirectingToLogin = false;
 async function parseResponse<TData, TMeta>(
   response: Response,
 ): Promise<ApiSuccessResponse<TData, TMeta>> {
-  const payload = (await response.json()) as
+  const payload = (await response.json().catch(() => null)) as
     | ApiSuccessResponse<TData, TMeta>
-    | ApiErrorResponse;
+    | ApiErrorResponse
+    | null;
 
-  if (!response.ok || !payload.success) {
-    throw new ApiClientError(payload.message || "Request failed", {
+  if (!response.ok || !payload?.success) {
+    const fallbackMessage = response.status === 413 ? "Upload exceeds the allowed size." : "Request failed";
+    throw new ApiClientError(payload?.message || fallbackMessage, {
       status: response.status,
-      errorCode: "errorCode" in payload ? payload.errorCode : undefined,
-      errors: "errors" in payload ? payload.errors : [],
+      errorCode: payload && "errorCode" in payload ? payload.errorCode : undefined,
+      errors: payload && "errors" in payload ? payload.errors : [],
     });
   }
 

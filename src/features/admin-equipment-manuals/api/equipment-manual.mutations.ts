@@ -36,9 +36,11 @@ export function useCreateEquipmentManual() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createEquipmentManual,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminEquipmentManualKeys.all });
-      queryClient.invalidateQueries({ queryKey: adminEquipmentKeys.all });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: adminEquipmentManualKeys.all }),
+        queryClient.invalidateQueries({ queryKey: adminEquipmentKeys.all }),
+      ]);
     },
   });
 }

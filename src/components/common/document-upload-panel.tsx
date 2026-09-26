@@ -29,7 +29,7 @@ export function DocumentUploadPanel({
   value,
   onChange,
   accept = "application/pdf,.pdf",
-  maxSizeMb = 25,
+  maxSizeMb = 10,
   className,
 }: DocumentUploadPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,16 +52,18 @@ export function DocumentUploadPanel({
       return;
     }
 
-    const isPdf = selectedFile.type === "application/pdf" || selectedFile.name.toLowerCase().endsWith(".pdf");
+    const hasPdfExtension = selectedFile.name.toLowerCase().endsWith(".pdf");
+    const hasPdfMimeType = !selectedFile.type || selectedFile.type === "application/pdf";
+    const isPdf = hasPdfExtension && hasPdfMimeType;
 
     if (!isPdf) {
-      toast.error("Please choose a PDF manual file.");
+      toast.error("Only PDF manual files are allowed.");
       event.target.value = "";
       return;
     }
 
     if (selectedFile.size > maxSizeMb * 1024 * 1024) {
-      toast.error(`PDF size should be under ${maxSizeMb} MB.`);
+      toast.error(`PDF must be ${maxSizeMb} MB or smaller.`);
       event.target.value = "";
       return;
     }
