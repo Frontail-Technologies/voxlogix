@@ -159,7 +159,9 @@ export function VoiceRecordingStep({ onComplete }: VoiceRecordingStepProps) {
     const recognition = new SpeechRecognitionCtor();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
+    // Web SpeechRecognition has no portable multilingual-switching API. Use the
+    // user's browser locale instead of forcing English and preserve its result verbatim.
+    recognition.lang = navigator.language || document.documentElement.lang || "";
 
     recognition.onresult = (event) => {
       let interim = "";

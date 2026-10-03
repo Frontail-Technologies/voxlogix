@@ -18,6 +18,7 @@ import {
 } from "@/features/admin-users/api/user.api";
 import type { AdminListItem } from "@/features/master-admins/api/admin.types";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useMyCompany } from "@/features/master-companies/api/company.queries";
 
 import { UsersSummaryCards } from "./users-summary-cards";
 import { UsersTable } from "./users-table";
@@ -94,8 +95,13 @@ function UsersDataView({ companyId }: { companyId: string }) {
   const executionSummary = useAdminUsersList({ companyId, role: "EXECUTION", limit: 1 });
   const activePlannerSummary = useAdminUsersList({ companyId, role: "PLANNER", status: "ACTIVE", limit: 1 });
   const activeExecutionSummary = useAdminUsersList({ companyId, role: "EXECUTION", status: "ACTIVE", limit: 1 });
+  const myCompany = useMyCompany();
   const users = usersQuery.data?.data ?? [];
   const meta = usersQuery.data?.meta;
+
+  const seatLimit = myCompany.data?.data?.accessSummary.userCreationLimit;
+  const totalActiveUsers = myCompany.data?.data?.stats.activeUsers;
+  const isSeatFull = seatLimit != null && totalActiveUsers != null && totalActiveUsers >= seatLimit;
 
   function updateQuery(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -127,7 +133,13 @@ function UsersDataView({ companyId }: { companyId: string }) {
         title="Users"
         description="Manage planners and execution users for your company."
         action={
-          <Button type="button" className="rounded-xl" onClick={openCreate}>
+          <Button
+            type="button"
+            className="rounded-xl"
+            onClick={openCreate}
+            disabled={isSeatFull}
+            title={isSeatFull ? "User limit reached. Contact VoxLogiX to increase your company user limit." : undefined}
+          >
             <AppIcon name="plus" className="size-4" />
             Add User
           </Button>
@@ -142,6 +154,7 @@ function UsersDataView({ companyId }: { companyId: string }) {
           activeUsers={(activePlannerSummary.data?.meta?.totalItems ?? 0) + (activeExecutionSummary.data?.meta?.totalItems ?? 0)}
           planners={plannerSummary.data?.meta?.totalItems ?? 0}
           executionUsers={executionSummary.data?.meta?.totalItems ?? 0}
+          seatLimit={seatLimit}
         />
       )}
 

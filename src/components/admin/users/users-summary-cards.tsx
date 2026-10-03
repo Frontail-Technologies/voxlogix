@@ -5,12 +5,19 @@ export function UsersSummaryCards({
   activeUsers,
   planners,
   executionUsers,
+  seatLimit,
 }: {
   totalUsers: number;
   activeUsers: number;
   planners: number;
   executionUsers: number;
+  seatLimit?: number;
 }) {
+  const isFull = seatLimit != null && activeUsers >= seatLimit;
+  const seatHelper = seatLimit != null
+    ? `${activeUsers} / ${seatLimit} seats used`
+    : "Can access the app";
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       <DashboardStatCard
@@ -22,10 +29,10 @@ export function UsersSummaryCards({
       />
       <DashboardStatCard
         label="Active Users"
-        value={String(activeUsers)}
-        helper="Can access the app"
+        value={seatLimit != null ? `${activeUsers} / ${seatLimit}` : String(activeUsers)}
+        helper={isFull ? "Seat limit reached" : seatHelper}
         icon="status"
-        tone="green"
+        tone={isFull ? "amber" : "green"}
       />
       <DashboardStatCard
         label="Planners"

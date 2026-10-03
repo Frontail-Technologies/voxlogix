@@ -77,7 +77,7 @@ export function CompanyAccessClient({ companyId }: { companyId: string }) {
   const initialValues = useMemo<FormValues>(() => ({
     ...defaultFlags(access),
     enabledModuleIds: [...(access?.enabledModuleIds ?? [])].sort(),
-    userCreationLimit: access?.userCreationLimit ?? 0,
+    userCreationLimit: access?.userCreationLimit ?? 75,
     aiUsageLimitMinutes: access?.aiUsageLimitMinutes ?? 0,
   }), [access]);
   const currentValues = useMemo<FormValues>(() => ({
@@ -100,7 +100,7 @@ export function CompanyAccessClient({ companyId }: { companyId: string }) {
     ]);
     const userCreationLimit = numberValue(formData, "userCreationLimit");
     const aiUsageLimitMinutes = numberValue(formData, "aiUsageLimitMinutes");
-    if (!Number.isFinite(userCreationLimit) || userCreationLimit < 0) nextErrors.userCreationLimit = "Enter a valid user creation limit.";
+    if (!Number.isFinite(userCreationLimit) || userCreationLimit < 1) nextErrors.userCreationLimit = "User creation limit must be at least 1.";
     if (!Number.isFinite(aiUsageLimitMinutes) || aiUsageLimitMinutes < 0) nextErrors.aiUsageLimitMinutes = "Enter a valid AI usage limit.";
     if (hasFieldErrors(nextErrors)) {
       setErrors(nextErrors);
@@ -183,7 +183,7 @@ export function CompanyAccessClient({ companyId }: { companyId: string }) {
 
               <div className="grid gap-3 border-t border-border pt-4 sm:gap-4 sm:pt-6 md:grid-cols-2">
                 <FormField label="User Creation Limit" fieldName="userCreationLimit" error={errors.userCreationLimit}>
-                  <Input id="user-limit" name="userCreationLimit" type="number" min={0} value={limitOverride?.userCreationLimit ?? String(access.userCreationLimit)} onChange={handleLimitChange} className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.userCreationLimit)} />
+                  <Input id="user-limit" name="userCreationLimit" type="number" min={1} value={limitOverride?.userCreationLimit ?? String(access.userCreationLimit)} onChange={handleLimitChange} className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.userCreationLimit)} />
                 </FormField>
                 <FormField label="AI Usage Limit" fieldName="aiUsageLimitMinutes" error={errors.aiUsageLimitMinutes}>
                   <Input id="ai-limit" name="aiUsageLimitMinutes" type="number" min={0} value={limitOverride?.aiUsageLimitMinutes ?? String(access.aiUsageLimitMinutes)} onChange={handleLimitChange} className="h-11 rounded-xl bg-secondary/70" aria-invalid={Boolean(errors.aiUsageLimitMinutes)} />

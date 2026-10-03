@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { importedMasterDataKeys } from "@/features/imported-master-data/api/imported-master-data.keys";
 import type {
   ImportedMasterDataItem,
   ImportedMasterDataListParams,
   ImportedMasterDataSource,
+  InvalidateReadingPayload,
   MeasuringPointReadingHistoryItem,
   MeterCounterReadingHistoryItem,
   PaginationMeta,
@@ -55,5 +56,26 @@ export function useReadingHistory<T extends MeasuringPointReadingHistoryItem | M
     queryFn: () => apiRequest<T[], PaginationMeta>(`${readingHistorySourceEndpoints[source]}/${id}/readings?limit=30`),
     enabled: Boolean(id),
     ...listQueryOptions,
+  });
+}
+
+export function invalidateReading(input: InvalidateReadingPayload) {
+  return apiRequest<unknown>(
+    `${readingHistorySourceEndpoints[input.source]}/${input.itemId}/readings/${input.readingId}/invalidate`,
+    { method: "POST", body: { reason: input.reason } },
+  );
+}
+
+export function useInvalidateReading() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: invalidateReading,
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: importedMasterDataKeys.readingHistory(variables.source, variables.itemId) }),
+        queryClient.invalidateQueries({ queryKey: [...importedMasterDataKeys.all, variables.source] }),
+      ]);
+    },
   });
 }

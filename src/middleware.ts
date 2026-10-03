@@ -14,6 +14,7 @@ const ROLE_PREFIXES: Record<string, string> = {
 type TokenPayload = {
   role?: string;
   exp?: number;
+  requirePasswordReset?: boolean;
 };
 
 function decodePayload(token: string): TokenPayload | null {
@@ -30,6 +31,11 @@ function decodePayload(token: string): TokenPayload | null {
 function decodeRole(token: string): string | null {
   const payload = decodePayload(token);
   return typeof payload?.role === "string" ? payload.role : null;
+}
+
+function decodeRequiresPasswordReset(token: string): boolean {
+  const payload = decodePayload(token);
+  return payload?.requirePasswordReset === true;
 }
 
 function isExpired(token: string) {
@@ -65,6 +71,9 @@ export function middleware(request: NextRequest) {
   const role = decodeRole(tokenForRole);
   if (role !== requiredRole)
     return NextResponse.redirect(new URL("/unauthorized", request.url));
+
+  if (decodeRequiresPasswordReset(tokenForRole))
+    return NextResponse.redirect(new URL("/change-password", request.url));
 
   return NextResponse.next();
 }

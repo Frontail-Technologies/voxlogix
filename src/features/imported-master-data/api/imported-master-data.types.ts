@@ -99,8 +99,12 @@ export type MeasuringPointReadingHistoryItem = {
   deviationPercent: number | null;
   measurementStatus: string;
   isAlert: boolean;
+  status: string;
+  invalidatedAt: string | null;
+  invalidationReason: string | null;
   reportedAt: string;
   reportedBy: { id: string; fullName: string } | null;
+  invalidatedBy?: { id: string; fullName: string } | null;
 };
 export type MeterCounterReadingHistoryItem = {
   id: string;
@@ -117,8 +121,19 @@ export type MeterCounterReadingHistoryItem = {
   alertDeviationPct: number | null;
   counterStatus: string;
   isAlert: boolean;
+  status: string;
+  invalidatedAt: string | null;
+  invalidationReason: string | null;
   reportedAt: string;
   reportedBy: { id: string; fullName: string } | null;
+  invalidatedBy?: { id: string; fullName: string } | null;
+};
+
+export type InvalidateReadingPayload = {
+  source: "measuringPoints" | "meterCounters";
+  itemId: string;
+  readingId: string;
+  reason: string;
 };
 
 export type UpdateImportedMasterDataPayload =

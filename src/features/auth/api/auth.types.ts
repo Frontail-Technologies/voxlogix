@@ -17,3 +17,8 @@ export type LoginPayload = {
   identifier: string;
   password: string;
 };
+
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+};

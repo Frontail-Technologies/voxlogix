@@ -57,7 +57,7 @@ export function CompaniesList() {
       <div className="space-y-3">
         <CompaniesToolbar search={search} status={status} onSearchChange={(value) => updateQuery("search", value)} onStatusChange={(value) => updateQuery("status", value)} />
         <DashboardCard>
-          {isLoading ? <MasterTableSkeleton columns={7} /> : null}
+          {isLoading ? <MasterTableSkeleton columns={8} /> : null}
           {isError ? <p className="p-5 text-sm text-muted-foreground">Could not load companies.</p> : null}
           {!isLoading && !isError ? <CompaniesTable companies={companies} /> : null}
         </DashboardCard>
@@ -89,11 +89,21 @@ function CompaniesToolbar({ search, status, onSearchChange, onStatusChange }: { 
   );
 }
 
+function UsersSeatBadge({ activeUsers, limit }: { activeUsers?: number; limit?: number }) {
+  if (activeUsers == null || limit == null) return <span className="text-muted-foreground">—</span>;
+  const isFull = activeUsers >= limit;
+  return (
+    <span className={`font-medium tabular-nums ${isFull ? "text-destructive" : ""}`}>
+      {activeUsers} / {limit}
+    </span>
+  );
+}
+
 function CompaniesTable({ companies }: { companies: CompanyListItem[] }) {
   const queryClient = useQueryClient();
   return (
     <Table>
-      <TableHeader><TableRow><TableHead>Company</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead>Plan</TableHead><TableHead>Start Date</TableHead><TableHead>Expiry Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+      <TableHeader><TableRow><TableHead>Company</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead>Plan</TableHead><TableHead>Users</TableHead><TableHead>Start Date</TableHead><TableHead>Expiry Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
       <TableBody>
         {companies.length ? companies.map((company) => (
           <TableRow key={company.id}>
@@ -101,11 +111,12 @@ function CompaniesTable({ companies }: { companies: CompanyListItem[] }) {
             <TableCell>{company.ownerName}</TableCell>
             <TableCell><StatusBadge status={statusLabel(company.status)} /></TableCell>
             <TableCell>{company.plan}</TableCell>
+            <TableCell><UsersSeatBadge activeUsers={company.activeUsers} limit={company.userCreationLimit} /></TableCell>
             <TableCell>{formatDate(company.startDate)}</TableCell>
             <TableCell>{formatDate(company.expiryDate)}</TableCell>
             <TableCell className="text-right"><CompanyActionsMenu companyId={company.id} companyName={company.name} companyStatus={company.status} /></TableCell>
           </TableRow>
-        )) : <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">No companies found.</TableCell></TableRow>}
+        )) : <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">No companies found.</TableCell></TableRow>}
       </TableBody>
     </Table>
   );

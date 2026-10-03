@@ -53,13 +53,46 @@ function CompanyIdentity({ company }: { company: CompanyDetail }) {
 }
 
 function CompanyStatsGrid({ company }: { company: CompanyDetail }) {
+  const { userCreationLimit, availableSeats } = company.accessSummary;
+  const activeUsers = company.stats.activeUsers;
+  const usageLabel = `${activeUsers} / ${userCreationLimit}`;
+  const isFull = activeUsers >= userCreationLimit;
   const stats = [
-    { label: "Admins", value: company.stats.totalAdmins },
-    { label: "Logs", value: company.stats.totalLogs },
-    { label: "AI Logs", value: company.stats.aiUsageThisMonthLogs },
-    { label: "Est Cost", value: formatCurrency(company.stats.estimatedCost) },
+    {
+      label: "Users",
+      value: usageLabel,
+      sub: `${company.accessSummary.availableSeats} available`,
+      accent: isFull,
+    },
+    { label: "Logs", value: company.stats.totalLogs, sub: "all time", accent: false },
+    { label: "AI Logs", value: company.stats.aiUsageThisMonthLogs, sub: "this month", accent: false },
+    { label: "Est Cost", value: formatCurrency(company.stats.estimatedCost), sub: "all time", accent: false },
   ];
-  return <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">{stats.map((stat) => <div key={stat.label} className="rounded-2xl border border-border bg-background p-3 sm:p-4"><p className="text-xs text-muted-foreground">{stat.label}</p><p className="mt-1 text-lg font-semibold">{stat.value}</p></div>)}</div>;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className={`rounded-2xl border bg-background p-3 sm:p-4 ${stat.accent ? "border-destructive/40" : "border-border"}`}>
+            <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <p className={`mt-1 text-lg font-semibold ${stat.accent ? "text-destructive" : ""}`}>{stat.value}</p>
+            {stat.sub ? <p className="text-xs text-muted-foreground">{stat.sub}</p> : null}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {([
+          { label: "Admins", value: company.stats.activeAdmins },
+          { label: "Planners", value: company.stats.activePlanners },
+          { label: "Execution", value: company.stats.activeExecutionUsers },
+        ] as const).map((role) => (
+          <div key={role.label} className="rounded-2xl border border-border bg-background p-3 sm:p-4">
+            <p className="text-xs text-muted-foreground">{role.label}</p>
+            <p className="mt-1 text-base font-semibold">{role.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function CompanyInfoGrid({ company }: { company: CompanyDetail }) {

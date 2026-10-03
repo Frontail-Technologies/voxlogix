@@ -50,6 +50,10 @@ export default function LoginPage() {
     loginMutation.mutate(values, {
       onSuccess: (response) => {
         const role = response.data?.role ?? "";
+        if (response.data?.requirePasswordReset) {
+          router.push("/change-password");
+          return;
+        }
         router.push(roleRedirects[role] ?? "/unauthorized");
       },
       onError: (error) => {

@@ -6,39 +6,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppIcon } from "@/components/common/app-icon";
-import { FormField } from "@/components/common/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/config/constants";
-import {
-  useForgotPassword,
-  useResetPassword,
-  useVerifyResetOtp,
-} from "@/features/auth/api/auth.mutations";
+import { useForgotPassword } from "@/features/auth/api/auth.mutations";
 import { showApiErrorToast } from "@/lib/api/error-toast";
-import {
-  blurActiveElement,
-  clearFieldError,
-  focusFirstError,
-  hasFieldErrors,
-  type FieldErrors,
-} from "@/lib/forms/form-state";
 
-type Step = "identifier" | "otp" | "password" | "done";
+type Step = "identifier" | "sent";
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("identifier");
   const [identifier, setIdentifier] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordErrors, setPasswordErrors] = useState<FieldErrors>({});
 
   const forgotPasswordMutation = useForgotPassword();
-  const verifyOtpMutation = useVerifyResetOtp();
-  const resetPasswordMutation = useResetPassword();
 
   async function handleIdentifierSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,58 +29,18 @@ export default function ForgotPasswordPage() {
 
     try {
       await forgotPasswordMutation.mutateAsync({ identifier: value });
-      toast.success("If an account matches, a verification code has been sent.");
-      setStep("otp");
+      setStep("sent");
     } catch (error) {
-      showApiErrorToast(error, "Could not send verification code");
-    }
-  }
-
-  async function handleOtpSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (otp.trim().length !== 6) return;
-
-    try {
-      await verifyOtpMutation.mutateAsync({ identifier, otp: otp.trim() });
-      setStep("password");
-    } catch (error) {
-      showApiErrorToast(error, "Invalid or expired verification code");
+      showApiErrorToast(error, "Could not send reset link");
     }
   }
 
   async function handleResend() {
     try {
       await forgotPasswordMutation.mutateAsync({ identifier });
-      toast.success("Verification code resent.");
+      toast.success("Reset link resent.");
     } catch (error) {
-      showApiErrorToast(error, "Could not resend verification code");
-    }
-  }
-
-  async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    blurActiveElement();
-    const nextErrors: FieldErrors = {};
-    if (newPassword.trim().length < 8) nextErrors.newPassword = "Password must be at least 8 characters.";
-    if (confirmPassword.trim().length < 8) {
-      nextErrors.confirmPassword = "Confirm password must be at least 8 characters.";
-    } else if (newPassword !== confirmPassword) {
-      nextErrors.confirmPassword = "Passwords do not match.";
-    }
-    if (hasFieldErrors(nextErrors)) {
-      setPasswordErrors(nextErrors);
-      focusFirstError(event.currentTarget, nextErrors);
-      return;
-    }
-
-    try {
-      await resetPasswordMutation.mutateAsync({ identifier, otp: otp.trim(), newPassword, confirmPassword });
-      setStep("done");
-      setNewPassword("");
-      setConfirmPassword("");
-      setPasswordErrors({});
-    } catch (error) {
-      showApiErrorToast(error, "Could not reset password");
+      showApiErrorToast(error, "Could not resend reset link");
     }
   }
 
@@ -132,7 +74,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-1 text-center">
                 <h1 className="text-lg font-semibold text-foreground">Forgot Password</h1>
                 <p className="text-sm text-muted-foreground">
-                  Enter your username or email and we&apos;ll send you a verification code.
+                  Enter your username or email and we&apos;ll send you a password reset link.
                 </p>
               </div>
               <div className="space-y-2">
@@ -147,7 +89,7 @@ export default function ForgotPasswordPage() {
                 />
               </div>
               <Button type="submit" className="h-11 w-full rounded-xl" disabled={forgotPasswordMutation.isPending}>
-                {forgotPasswordMutation.isPending ? "Sending..." : "Send Verification Code"}
+                {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Link"}
               </Button>
               <Link className="block text-center text-sm text-primary hover:underline" href="/login">
                 Back to login
@@ -155,94 +97,27 @@ export default function ForgotPasswordPage() {
             </form>
           ) : null}
 
-          {step === "otp" ? (
-            <form className="space-y-5" onSubmit={handleOtpSubmit} noValidate>
-              <div className="space-y-1 text-center">
-                <h1 className="text-lg font-semibold text-foreground">Enter Verification Code</h1>
-                <p className="text-sm text-muted-foreground">
-                  We sent a 6-digit code to the email on file for <span className="font-medium text-foreground">{identifier}</span>.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otp">Verification code</Label>
-                <Input
-                  id="otp"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="123456"
-                  className="h-11 rounded-xl bg-secondary/70 text-center text-lg tracking-[0.5em]"
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                  required
-                />
-              </div>
-              <Button type="submit" className="h-11 w-full rounded-xl" disabled={verifyOtpMutation.isPending || otp.length !== 6}>
-                {verifyOtpMutation.isPending ? "Verifying..." : "Verify Code"}
-              </Button>
-              <div className="flex items-center justify-between text-sm">
-                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setStep("identifier")}>
-                  Change email
-                </button>
-                <button type="button" className="text-primary hover:underline" onClick={() => void handleResend()} disabled={forgotPasswordMutation.isPending}>
-                  Resend code
-                </button>
-              </div>
-            </form>
-          ) : null}
-
-          {step === "password" ? (
-            <form className="space-y-5" onSubmit={handlePasswordSubmit} noValidate>
-              <div className="space-y-1 text-center">
-                <h1 className="text-lg font-semibold text-foreground">Set New Password</h1>
-                <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
-              </div>
-              <FormField label="New password" fieldName="newPassword" error={passwordErrors.newPassword}>
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  minLength={8}
-                  value={newPassword}
-                  onChange={(event) => {
-                    setNewPassword(event.target.value);
-                    setPasswordErrors((current) => clearFieldError(current, "newPassword"));
-                  }}
-                  className="h-11 rounded-xl bg-secondary/70"
-                  aria-invalid={Boolean(passwordErrors.newPassword)}
-                />
-              </FormField>
-              <FormField label="Confirm password" fieldName="confirmPassword" error={passwordErrors.confirmPassword}>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  minLength={8}
-                  value={confirmPassword}
-                  onChange={(event) => {
-                    setConfirmPassword(event.target.value);
-                    setPasswordErrors((current) => clearFieldError(current, "confirmPassword"));
-                  }}
-                  className="h-11 rounded-xl bg-secondary/70"
-                  aria-invalid={Boolean(passwordErrors.confirmPassword)}
-                />
-              </FormField>
-              <Button type="submit" className="h-11 w-full rounded-xl" disabled={resetPasswordMutation.isPending || newPassword.length < 8 || confirmPassword.length < 8 || newPassword !== confirmPassword || hasFieldErrors(passwordErrors)}>
-                {resetPasswordMutation.isPending ? "Saving..." : "Reset Password"}
-              </Button>
-            </form>
-          ) : null}
-
-          {step === "done" ? (
+          {step === "sent" ? (
             <div className="space-y-5 text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/15 text-primary">
                 <AppIcon name="status" className="size-7" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-lg font-semibold text-foreground">Password Reset</h1>
-                <p className="text-sm text-muted-foreground">Your password has been updated. You can now sign in.</p>
+                <h1 className="text-lg font-semibold text-foreground">Check your email</h1>
+                <p className="text-sm text-muted-foreground">
+                  If an account exists for <span className="font-medium text-foreground">{identifier}</span>, a password reset link has been sent. The link expires in 30 minutes.
+                </p>
               </div>
+              <button
+                type="button"
+                className="text-sm text-primary hover:underline disabled:opacity-60"
+                onClick={() => void handleResend()}
+                disabled={forgotPasswordMutation.isPending}
+              >
+                Resend link
+              </button>
               <Link href="/login" className="block">
-                <Button type="button" className="h-11 w-full rounded-xl">
+                <Button type="button" variant="outline" className="h-11 w-full rounded-xl">
                   Back to Login
                 </Button>
               </Link>

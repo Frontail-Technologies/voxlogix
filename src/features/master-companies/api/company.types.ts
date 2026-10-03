@@ -17,15 +17,19 @@ export type CompanyListItem = {
   status: string;
   createdAt: string;
   updatedAt: string;
+  // Seat usage — present on all list items from the updated API.
+  activeUsers?: number;
+  userCreationLimit?: number;
 };
 
 export type CompanyDetail = CompanyListItem & {
   address: string | null;
   notes: string | null;
   stats: {
-    totalAdmins: number;
-    totalPlanners: number;
-    totalExecutionUsers: number;
+    activeUsers: number;
+    activeAdmins: number;
+    activePlanners: number;
+    activeExecutionUsers: number;
     totalLogs: number;
     aiUsageThisMonthLogs: number;
     storageUsedGb: number;
@@ -34,6 +38,7 @@ export type CompanyDetail = CompanyListItem & {
   };
   accessSummary: {
     userCreationLimit: number;
+    availableSeats: number;
     aiUsageLimitMinutes: number;
     storageLimitGb: number;
   };
