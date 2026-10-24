@@ -392,6 +392,7 @@
 .landing-nav-link {
   font-size: 0.875rem;
   font-weight: 500;
+  white-space: nowrap;
   color: color-mix(in oklch, var(--foreground) 72%, transparent);
   padding-inline: 0.75rem;
   padding-block: 0.5rem;

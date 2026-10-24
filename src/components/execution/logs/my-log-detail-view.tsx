@@ -84,6 +84,7 @@ function LogOverviewCard({ log }: { log: AdminLogDetail }) {
             <InfoRow label="ID" value={log.equipment?.equipmentCode} />
             <InfoRow label="Section" value={log.equipment?.section} />
             <InfoRow label="Sub Location" value={log.equipment?.subLocation} />
+            <InfoRow label="Stoppage Category" value={log.stoppageCategory ?? extractedText(log.extractedFields.stoppageCategory)} />
           </InfoBlock>
           <InfoBlock title="Location Captured">
             <InfoRow label="Address" value={log.capturedAddress} />
@@ -128,6 +129,10 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
       <span className="text-muted-foreground">{label}:</span> {value || "-"}
     </p>
   );
+}
+
+function extractedText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function AiFieldsCard({ log }: { log: AdminLogDetail }) {

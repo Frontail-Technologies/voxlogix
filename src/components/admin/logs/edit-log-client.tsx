@@ -51,6 +51,7 @@ export function EditLogClient({ logId }: { logId: string }) {
             description: log.description,
             transcript: log.transcript,
             issueCategory: log.issueCategory,
+            stoppageCategory: log.stoppageCategory,
             downtimeMinutes: log.downtimeMinutes,
             voiceDurationSeconds: log.voiceDurationSeconds,
             voiceRecordingUrl: log.voiceRecordingUrl,

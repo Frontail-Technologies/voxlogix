@@ -96,7 +96,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   function prefetchRoute(href: string) {
     if (href === "/admin/dashboard") void prefetchAdminDashboardSummary(queryClient);
-    else if (href === "/admin/logs") void queryClient.prefetchQuery({ queryKey: adminLogKeys.list({ page: 1, limit: 20 }), queryFn: () => getLogs({ page: 1, limit: 20 }), ...listQueryOptions });
+    else if (href === "/admin/logs" || href === "/master/logs") void queryClient.prefetchQuery({ queryKey: adminLogKeys.list({ page: 1, limit: 20 }), queryFn: () => getLogs({ page: 1, limit: 20 }), ...listQueryOptions });
     else if (href === "/admin/equipment") void queryClient.prefetchQuery({ queryKey: adminEquipmentKeys.list({ page: 1, limit: 20 }), queryFn: () => getEquipment({ page: 1, limit: 20 }), ...listQueryOptions });
     else if (href === "/admin/users") void queryClient.prefetchQuery({ queryKey: adminKeys.list({ page: 1, limit: 20 }), queryFn: () => getAdmins({ page: 1, limit: 20 }), ...listQueryOptions });
     else if (href === "/admin/modules" || href === "/master/modules") void queryClient.prefetchQuery({ queryKey: moduleKeys.list({ page: 1, limit: 20 }), queryFn: () => getModules({ page: 1, limit: 20 }), ...listQueryOptions });

@@ -4,12 +4,14 @@
   moduleType: string;
   title: string;
   issueCategory: string | null;
+  stoppageCategory: string | null;
   severity: string;
   status: string;
   aiProcessed: number;
   downtimeMinutes: number;
   createdAt: string;
   updatedAt: string;
+  company: { id: string | null; name: string | null } | null;
   thumbnailUrl: string | null;
   equipment: { id: string | null; equipmentCode: string | null; name: string | null; section: string | null; subLocation: string | null } | null;
   createdBy: { id: string | null; fullName: string | null; initials: string | null } | null;
@@ -30,7 +32,19 @@ export type AdminLogDetail = AdminLogListItem & {
   timeline: Array<{ id: string; actorNameSnapshot: string; event: string; status: string | null; notes: string | null; createdAt: string }>;
 };
 
-export type AdminLogListParams = { page?: number; limit?: number; search?: string; status?: string; severity?: string; moduleType?: string; equipmentId?: string; createdById?: string };
+export type AdminLogListParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  severity?: string;
+  moduleType?: string;
+  equipmentId?: string;
+  createdById?: string;
+  companyId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+};
 export type AdminLogPayload = {
   moduleId?: string | null;
   equipmentId?: string | null;
@@ -40,6 +54,7 @@ export type AdminLogPayload = {
   description?: string | null;
   transcript?: string | null;
   issueCategory?: string | null;
+  stoppageCategory?: string | null;
   severity?: string;
   status?: string;
   aiProcessed?: boolean;

@@ -45,6 +45,7 @@ export type LogFormValues = {
   description?: string | null;
   transcript?: string | null;
   issueCategory?: string | null;
+  stoppageCategory?: string | null;
   downtimeMinutes?: number;
   voiceDurationSeconds?: number;
   voiceRecordingUrl?: string | null;
@@ -114,6 +115,9 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
     const extractedFields = sortedModuleFields.length
       ? extractedFieldsValue(formData, sortedModuleFields)
       : values?.extractedFields;
+    const issueCategory = structuredString(extractedFields?.issueCategory) ?? values?.issueCategory ?? null;
+    const stoppageCategory = structuredString(extractedFields?.stoppageCategory) ?? values?.stoppageCategory ?? null;
+    const downtimeMinutes = structuredNumber(extractedFields?.downtimeMinutes) ?? values?.downtimeMinutes ?? 0;
     const payload: AdminLogPayload = {
       moduleId: values?.moduleId ?? null,
       moduleType,
@@ -121,8 +125,9 @@ export function LogForm({ mode, logId, values, moduleFields = [], schemaLoading 
       title: values?.title || titleFromSchemaFields(extractedFields) || "Log update",
       description: values?.description ?? null,
       transcript: values?.transcript ?? null,
-      issueCategory: values?.issueCategory ?? null,
-      downtimeMinutes: values?.downtimeMinutes ?? 0,
+      issueCategory,
+      stoppageCategory,
+      downtimeMinutes,
       voiceDurationSeconds: values?.voiceDurationSeconds ?? 0,
       voiceRecordingUrl: values?.voiceRecordingUrl ?? null,
       severity: values?.severity || "MEDIUM",
@@ -348,6 +353,16 @@ function extractedFieldsValue(formData: FormData, fields: ModuleField[]) {
     current[field.key] = rawValue || null;
     return current;
   }, {});
+}
+
+function structuredString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function structuredNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : null;
 }
 
 function titleFromSchemaFields(fields?: Record<string, unknown>) {

@@ -61,6 +61,7 @@ export type EquipmentFormValues = {
   category?: string;
   makeBrand?: string | null;
   modelNumber?: string | null;
+  serviceContact?: string | null;
   commissionedAt?: string | null;
   criticality?: string;
   notes?: string | null;
@@ -129,10 +130,11 @@ export function EquipmentForm({ mode, equipmentId, values }: EquipmentFormProps)
     status: values?.status ?? "ACTIVE",
     makeBrand: values?.makeBrand ?? "",
     modelNumber: values?.modelNumber ?? "",
+    serviceContact: values?.serviceContact ?? "",
     commissionedAt: dateInputValue(values?.commissionedAt) ?? "",
     notes: values?.notes ?? "",
     imageUrl: values?.imageUrl ?? "",
-  }), [values?.category, values?.commissionedAt, values?.criticality, values?.equipmentCode, values?.imageUrl, values?.latitude, values?.locationId, values?.longitude, values?.makeBrand, values?.mapUrl, values?.modelNumber, values?.name, values?.notes, values?.section, values?.status, values?.subLocation]);
+  }), [values?.category, values?.commissionedAt, values?.criticality, values?.equipmentCode, values?.imageUrl, values?.latitude, values?.locationId, values?.longitude, values?.makeBrand, values?.mapUrl, values?.modelNumber, values?.name, values?.notes, values?.section, values?.serviceContact, values?.status, values?.subLocation]);
   const [currentValues, setCurrentValues] = useState<FormValues>(initialValues);
   const isDirty = !isEdit || isFormDirty(initialValues, currentValues);
   const createReady = Boolean(currentValues.equipmentCode)
@@ -240,6 +242,7 @@ export function EquipmentForm({ mode, equipmentId, values }: EquipmentFormProps)
       status: stringValue(formData, "status") || "ACTIVE",
       makeBrand: nullableValue(formData, "makeBrand"),
       modelNumber: nullableValue(formData, "modelNumber"),
+      serviceContact: nullableValue(formData, "serviceContact"),
       commissionedAt: nullableValue(formData, "commissionedAt"),
       imageUrl: isPendingImageAsset(imageAsset) ? values?.imageUrl ?? null : imageAsset?.secureUrl ?? imageAsset?.url ?? values?.imageUrl ?? null,
       latitude: latitude || null,
@@ -351,6 +354,10 @@ export function EquipmentForm({ mode, equipmentId, values }: EquipmentFormProps)
 
             <Field label="Model Number">
               <Input name="modelNumber" defaultValue={values?.modelNumber ?? undefined} placeholder="KBL-450" className="h-11 rounded-xl bg-secondary/70" />
+            </Field>
+
+            <Field label="Service Contact">
+              <Input name="serviceContact" defaultValue={values?.serviceContact ?? undefined} placeholder="Name, phone, or email" className="h-11 rounded-xl bg-secondary/70" />
             </Field>
 
             <Field label="Commissioned Date">

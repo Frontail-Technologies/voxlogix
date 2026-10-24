@@ -33,6 +33,7 @@ export function EditEquipmentClient({ equipmentId }: { equipmentId: string }) {
             category: equipment.category,
             makeBrand: equipment.makeBrand,
             modelNumber: equipment.modelNumber,
+            serviceContact: equipment.serviceContact,
             commissionedAt: equipment.commissionedAt,
             criticality: equipment.criticality,
             notes: equipment.notes,

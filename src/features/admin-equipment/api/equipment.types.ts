@@ -5,6 +5,7 @@
   category: string;
   section: string;
   subLocation: string;
+  serviceContact: string | null;
   criticality: string;
   status: string;
   imageUrl: string | null;
@@ -50,6 +51,7 @@ export type EquipmentPayload = {
   subLocation: string;
   makeBrand?: string | null;
   modelNumber?: string | null;
+  serviceContact?: string | null;
   criticality?: string;
   status?: string;
   imageUrl?: string | null;

@@ -33,14 +33,20 @@ import { cn } from "@/lib/utils";
 
 import { LogStatusBadge, SeverityBadge } from "./log-badges";
 
-export function LogDetailView({ logId }: { logId: string }) {
+type LogDetailViewProps = {
+  logId: string;
+  readOnly?: boolean;
+  showCompany?: boolean;
+};
+
+export function LogDetailView({ logId, readOnly = false, showCompany = false }: LogDetailViewProps) {
   const { data, isLoading, isError } = useLogDetail(logId);
   const log = data?.data;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <DashboardPageHeader
-        title="Log Detail"
+        title={readOnly ? "Company Log Detail" : "Log Detail"}
         description="Log summary, AI extracted fields, transcript, media, and timeline"
         hideDescriptionOnMobile
       />
@@ -54,22 +60,22 @@ export function LogDetailView({ logId }: { logId: string }) {
         </DashboardCard>
       ) : null}
       {log ? (
-        <div className="grid items-start gap-3 sm:gap-4 xl:grid-cols-[1fr_320px]">
+        <div className={cn("grid items-start gap-3 sm:gap-4", !readOnly && "xl:grid-cols-[1fr_320px]")}>
           <div className="space-y-3 sm:space-y-4">
-            <LogOverviewCard log={log} />
+            <LogOverviewCard log={log} showCompany={showCompany} />
             <AiFieldsCard log={log} />
             {isReadingLog(log.moduleType) ? null : <TranscriptCard log={log} />}
             <MediaCard log={log} />
             <TimelineCard log={log} />
           </div>
-          <LogQuickActions log={log} />
+          {readOnly ? null : <LogQuickActions log={log} />}
         </div>
       ) : null}
     </div>
   );
 }
 
-function LogOverviewCard({ log }: { log: AdminLogDetail }) {
+function LogOverviewCard({ log, showCompany }: { log: AdminLogDetail; showCompany: boolean }) {
   return (
     <DashboardCard>
       <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
@@ -84,7 +90,8 @@ function LogOverviewCard({ log }: { log: AdminLogDetail }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className={cn("grid grid-cols-2 gap-3", showCompany ? "lg:grid-cols-5" : "xl:grid-cols-4")}>
+          {showCompany ? <Stat label="Company" value={log.company?.name ?? "-"} /> : null}
           <Stat label="Created" value={formatLogDate(log.createdAt)} />
           <Stat label="Created By" value={log.createdBy?.fullName ?? "System"} />
           <Stat label="Module" value={log.module?.name ?? logLabel(log.moduleType)} />
@@ -97,6 +104,7 @@ function LogOverviewCard({ log }: { log: AdminLogDetail }) {
             <InfoRow label="ID" value={log.equipment?.equipmentCode} />
             <InfoRow label="Section" value={log.equipment?.section} />
             <InfoRow label="Sub Location" value={log.equipment?.subLocation} />
+            <InfoRow label="Stoppage Category" value={log.stoppageCategory ?? extractedText(log.extractedFields.stoppageCategory)} />
           </InfoBlock>
           <InfoBlock title="Location Captured">
             <InfoRow label="Address" value={log.capturedAddress} />
@@ -151,6 +159,10 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
       <span className="text-right font-medium text-foreground">{value || "-"}</span>
     </div>
   );
+}
+
+function extractedText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function LocationMap({ latitude, longitude }: { latitude?: string | null; longitude?: string | null }) {

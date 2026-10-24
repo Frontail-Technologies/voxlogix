@@ -17,10 +17,12 @@ import { MasterDetailSkeleton } from "@/components/master/master-skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateLog } from "@/features/logs/api/log.mutations";
 import { useLogDetail } from "@/features/logs/api/log.queries";
 import type { AdminLogDetail } from "@/features/logs/api/log.types";
+import { useMasterDataOptions } from "@/features/master-data-options/api/master-data-option.queries";
 import { showApiErrorToast } from "@/lib/api/error-toast";
 import {
   blurActiveElement,
@@ -35,6 +37,7 @@ type DraftFields = {
   title: string;
   problemDescription: string;
   failureMode: string;
+  stoppageCategory: string;
   rootCause: string;
   actionTaken: string;
   downtimeMinutes: number;
@@ -51,6 +54,7 @@ function fieldsFromLog(log: AdminLogDetail): DraftFields {
     title: log.title,
     problemDescription: log.description ?? "",
     failureMode: stringField("failureMode"),
+    stoppageCategory: log.stoppageCategory ?? stringField("stoppageCategory"),
     rootCause: stringField("rootCause"),
     actionTaken: stringField("actionTaken"),
     downtimeMinutes: log.downtimeMinutes,
@@ -86,6 +90,11 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
   const initialFields = useMemo(() => fieldsFromLog(log), [log]);
   const [fields, setFields] = useState<DraftFields>(() => initialFields);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const isOperationsLog = /equipment|operations|operational/i.test(`${log.moduleType} ${log.module?.name ?? ""}`);
+  const stoppageOptionsQuery = useMasterDataOptions(
+    { sourceKey: "issue_categories", fieldKey: "stoppageCategory" },
+    isOperationsLog,
+  );
   const formValues: FormValues = fields;
   const isDirty = isFormDirty(initialFields, formValues);
   const hasRequiredFields = Boolean(fields.title.trim() && Number.isFinite(fields.downtimeMinutes) && fields.downtimeMinutes >= 0);
@@ -114,8 +123,11 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
         description: fields.problemDescription,
         status,
         downtimeMinutes: fields.downtimeMinutes,
+        stoppageCategory: fields.stoppageCategory || null,
         extractedFields: {
+          ...log.extractedFields,
           failureMode: fields.failureMode,
+          stoppageCategory: fields.stoppageCategory,
           rootCause: fields.rootCause,
           actionTaken: fields.actionTaken,
           sparePartReference: fields.sparePartReference,
@@ -162,6 +174,21 @@ function DraftForm({ logId, log }: { logId: string; log: AdminLogDetail }) {
               className="h-11 rounded-xl bg-secondary/70"
             />
           </div>
+          {isOperationsLog ? (
+            <div className="space-y-2">
+              <Label>Stoppage Category</Label>
+              <Select value={fields.stoppageCategory || undefined} onValueChange={(value) => updateField("stoppageCategory", value ?? "")}>
+                <SelectTrigger className="h-11 w-full rounded-xl bg-secondary/70">
+                  <SelectValue placeholder={stoppageOptionsQuery.isLoading ? "Loading categories..." : "Select category"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(stoppageOptionsQuery.data?.data ?? []).map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
           <FormField label="Downtime (minutes)" fieldName="downtimeMinutes" error={errors.downtimeMinutes}>
             <Input
               type="number"

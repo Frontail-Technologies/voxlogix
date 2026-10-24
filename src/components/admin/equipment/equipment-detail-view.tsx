@@ -162,6 +162,7 @@ function EquipmentInfoGrid({ equipment }: { equipment: EquipmentDetail }) {
       <InfoCard title="Asset Info">
         <InfoRow label="Make / Brand" value={equipment.makeBrand} />
         <InfoRow label="Model Number" value={equipment.modelNumber} />
+        <InfoRow label="Service Contact" value={equipment.serviceContact} />
         <InfoRow
           label="Commissioned"
           value={formatEquipmentDate(equipment.commissionedAt)}

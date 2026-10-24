@@ -12,6 +12,7 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
   master: [
     { title: "Dashboard", href: "/master/dashboard", icon: "dashboard" },
     { title: "Companies", href: "/master/companies", icon: "companies" },
+    { title: "Company Logs", href: "/master/logs", icon: "logs" },
     { title: "Admins", href: "/master/admins", icon: "admins" },
     { title: "Modules", href: "/master/modules", icon: "modules" },
     { title: "AI Usage", href: "/master/usage", icon: "ai" },

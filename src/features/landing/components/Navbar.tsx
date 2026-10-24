@@ -22,29 +22,29 @@ export function Navbar() {
 
   return (
     <header className="landing-navbar sticky top-0 inset-x-0 z-50">
-      <div className="landing-container relative flex items-center justify-between xl:grid xl:grid-cols-[1fr_auto_1fr] h-16 md:h-20">
+      <div className="landing-container relative flex h-16 items-center justify-between md:h-20 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <Link href="/" aria-label="VoxLogiX home" className="shrink-0">
           <BrandLogo size="sm" />
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-0.5 justify-self-center" aria-label="Main navigation">
+        <nav className="hidden items-center justify-self-center gap-0 lg:flex" aria-label="Main navigation">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="landing-nav-link">
+            <Link key={link.href} href={link.href} className="landing-nav-link whitespace-nowrap lg:px-1.5 xl:px-3">
               {link.label}
             </Link>
           ))}
         </nav>
 
         <div className="flex items-center justify-self-end gap-2">
-          <div className="hidden xl:flex items-center gap-2">
+          <div className="hidden items-center gap-2 xl:flex">
             <CallButton />
             <ThemeToggle />
           </div>
-          <Link href="/#demo" className="landing-btn-outline hidden xl:inline-flex">
+          <Link href="/#demo" className="landing-btn-outline hidden whitespace-nowrap lg:inline-flex lg:px-3 xl:px-5">
             Request a Demo
           </Link>
 
-          <div className="flex xl:hidden items-center gap-1.5">
+          <div className="flex items-center gap-1.5 lg:hidden">
             <CallButton />
             <ThemeToggle />
             <button
@@ -62,7 +62,7 @@ export function Navbar() {
       </div>
 
       {mobileOpen ? (
-        <div className="xl:hidden bg-background border-t border-border px-6 py-4 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 border-t border-border bg-background px-6 py-4 lg:hidden">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
